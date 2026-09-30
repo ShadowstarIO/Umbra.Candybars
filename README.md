@@ -1,16 +1,31 @@
 # Candybars
 
-One Umbra widget, one person. Add a copy for every slot and stack them on a vertical aux bar. Use Umbra's Separator between raid groups.
+Build a party and target HUD out of Umbra bars. Each widget is one person. Stack copies on a vertical aux bar and use Umbra's Separator between raid groups.
 
-Each copy has its own **Who** setting:
+## Widgets
+
+| Widget | What it shows |
+|---|---|
+| Candybar | Name, job, HP, MP, shield, cast, buffs, debuffs |
+| Candy Name | Name only, larger text |
+| Candy Job | Job icon only, larger |
+| Candy Vitals | HP, MP, and shield, taller bars |
+| Candy Cast | Name and cast bar |
+| Candy Buffs | Buff icons |
+| Candy Debuffs | Debuff icons, green border if cleansable |
+
+Every widget can follow:
 
 - Me
+- Target, Target of Target, Focus Target
 - Party 1–8
 - Alliance A1–A8, B1–B8, C1–C8
 
-An empty slot hides by default, so the stack closes up. Party 1 and your own alliance slot are the same person. Don't place both.
+Width, bar height, text size, and icon size are settings. Width applies on a vertical aux bar. Turn **Background** off for a bare bar. Click a bar to target that person. Empty slots hide, so the stack closes up.
 
-Shield is drawn on the HP bar only while that character is loaded. Alliance members outside your party often have no MP, so that bar hides itself.
+A dead person goes grey and reads DEAD. A cleansable debuff turns the border green. Casts, shields, and status icons only update while that character is loaded. There is no stamina stat on the party list, so the third vitals bar is shield.
+
+Party 1 and your own alliance slot are the same person. Don't place both.
 
 ## Install
 
@@ -18,9 +33,5 @@ Umbra → Settings → Plugins:
 
 - Owner: `ShadowstarIO`
 - Repository: `Umbra.Candybars`
-
-Or install `Umbra.PartyBar.dll` from the latest release with **Install from file**.
-
-Then add **Candybar** to a vertical aux bar, duplicate it, and set Who on each copy.
 
 Repository: https://github.com/ShadowstarIO/Umbra.Candybars
