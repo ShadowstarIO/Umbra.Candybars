@@ -16,9 +16,11 @@ Shield is drawn on the HP bar only while that character is loaded. Alliance memb
 
 Umbra → Settings → Plugins:
 
-- Owner: `XozaShadow`
-- Repository: `Candybars`
+- Owner: `ShadowstarIO`
+- Repository: `Umbra.Candybars`
 
 Or install `Umbra.PartyBar.dll` from the latest release with **Install from file**.
 
 Then add **Candybar** to a vertical aux bar, duplicate it, and set Who on each copy.
+
+Repository: https://github.com/ShadowstarIO/Umbra.Candybars

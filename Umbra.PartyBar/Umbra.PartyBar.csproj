@@ -22,10 +22,10 @@
 
     <PropertyGroup>
         <ProductName>Candybars</ProductName>
-        <Authors>XozaShadow</Authors>
-        <Version>1.0.1.0</Version>
+        <Authors>ShadowstarIO</Authors>
+        <Version>1.0.2.0</Version>
         <Description>One Umbra bar per party or alliance slot.</Description>
-        <PackageProjectUrl>https://github.com/XozaShadow/Candybars</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/ShadowstarIO/Umbra.Candybars</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
