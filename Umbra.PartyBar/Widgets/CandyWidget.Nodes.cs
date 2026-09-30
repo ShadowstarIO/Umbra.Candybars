@@ -81,7 +81,7 @@ public abstract partial class CandyWidget
     private static Node StatusRow(string id)
     {
         var row = new Node { Id = id, ClassList = ["statuses"] };
-        for (var i = 0; i < 12; i++)
+        for (var i = 0; i < 16; i++)
             row.AppendChild(new Node { Id = $"{id}-{i}", ClassList = ["status"] });
 
         return row;

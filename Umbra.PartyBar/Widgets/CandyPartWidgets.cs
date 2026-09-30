@@ -128,13 +128,47 @@ public sealed class CandyBuffsWidget(
     protected override string Title => "Candy Buffs";
     protected override bool ShowBuffs => true;
     protected override int IconSize => GetConfigValue<int>("IconSize");
+    protected override int BuffCount => GetConfigValue<int>("BuffCount");
 
     protected override IEnumerable<IWidgetConfigVariable> GetConfigVariables()
     {
         foreach (var variable in base.GetConfigVariables())
             yield return variable;
 
-        yield return new IntegerWidgetConfigVariable("IconSize", "Icon size", null, 28, 16, 48);
+        yield return new IntegerWidgetConfigVariable("IconSize", "Icon size", null, 28, 12, 64);
+        yield return new IntegerWidgetConfigVariable("BuffCount", "Buff count", null, 8, 0, 16);
+    }
+}
+
+[ToolbarWidget("CandyStatus", "Candy Status", "Buffs on one row and debuffs on the other. Sizes, counts, and which row sits on top are settings.")]
+public sealed class CandyStatusWidget(
+    WidgetInfo                  info,
+    string?                     guid         = null,
+    Dictionary<string, object>? configValues = null
+) : CandyWidget(info, guid, configValues)
+{
+    protected override string Title => "Candy Status";
+    protected override bool ShowBuffs => true;
+    protected override bool ShowDebuffs => true;
+    protected override bool HighlightCleansable => true;
+    protected override int BuffIconSize => GetConfigValue<int>("BuffIconSize");
+    protected override int DebuffIconSize => GetConfigValue<int>("DebuffIconSize");
+    protected override int BuffCount => GetConfigValue<int>("BuffCount");
+    protected override int DebuffCount => GetConfigValue<int>("DebuffCount");
+    protected override int OrderBuffs => GetConfigValue<int>("OrderBuffs");
+    protected override int OrderDebuffs => GetConfigValue<int>("OrderDebuffs");
+
+    protected override IEnumerable<IWidgetConfigVariable> GetConfigVariables()
+    {
+        foreach (var variable in base.GetConfigVariables())
+            yield return variable;
+
+        yield return new IntegerWidgetConfigVariable("BuffIconSize", "Buff icon size", null, 18, 10, 64);
+        yield return new IntegerWidgetConfigVariable("DebuffIconSize", "Debuff icon size", null, 26, 10, 64);
+        yield return new IntegerWidgetConfigVariable("BuffCount", "Buff count", null, 8, 0, 16);
+        yield return new IntegerWidgetConfigVariable("DebuffCount", "Debuff count", null, 8, 0, 16);
+        yield return Layout("OrderBuffs", "Buff row", 10);
+        yield return Layout("OrderDebuffs", "Debuff row", 20);
     }
 }
 
@@ -149,12 +183,15 @@ public sealed class CandyDebuffsWidget(
     protected override bool ShowDebuffs => true;
     protected override bool HighlightCleansable => true;
     protected override int IconSize => GetConfigValue<int>("IconSize");
+    protected override int DebuffIconSize => IconSize;
+    protected override int DebuffCount => GetConfigValue<int>("DebuffCount");
 
     protected override IEnumerable<IWidgetConfigVariable> GetConfigVariables()
     {
         foreach (var variable in base.GetConfigVariables())
             yield return variable;
 
-        yield return new IntegerWidgetConfigVariable("IconSize", "Icon size", null, 28, 16, 48);
+        yield return new IntegerWidgetConfigVariable("IconSize", "Icon size", null, 28, 12, 64);
+        yield return new IntegerWidgetConfigVariable("DebuffCount", "Debuff count", null, 8, 0, 16);
     }
 }

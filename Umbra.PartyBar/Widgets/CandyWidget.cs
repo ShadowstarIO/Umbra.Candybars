@@ -39,9 +39,31 @@ public abstract partial class CandyWidget(
     protected virtual bool ShowDeathMark => true;
 
     protected virtual int BarHeight => 10;
+    protected virtual int MpBarHeight => System.Math.Max(4, BarHeight - 4);
+    protected virtual int ShieldBarHeight => System.Math.Max(4, BarHeight - 6);
+    protected virtual int CastBarHeight => BarHeight;
     protected virtual int TextSize => 13;
+    protected virtual int NumberSize => System.Math.Max(10, TextSize - 1);
+    protected virtual int CastTextSize => System.Math.Max(10, TextSize - 1);
     protected virtual int IconSize => 20;
+    protected virtual int BuffIconSize => IconSize;
+    protected virtual int DebuffIconSize => IconSize;
+    protected virtual int BuffCount => 8;
+    protected virtual int DebuffCount => 8;
+    protected virtual int OrderName => 10;
+    protected virtual int OrderJob => 0;
+    protected virtual int OrderLabel => 1;
+    protected virtual int OrderNumbers => 2;
+    protected virtual int OrderHp => 20;
+    protected virtual int OrderMp => 30;
+    protected virtual int OrderShield => 40;
+    protected virtual int OrderCast => 50;
+    protected virtual int OrderBuffs => 60;
+    protected virtual int OrderDebuffs => 70;
     protected virtual int Width => GetConfigValue<int>("Width");
+
+    private int _rowOrder = int.MinValue;
+    private int _headerOrder = int.MinValue;
 
     public override string GetInstanceName()
     {
@@ -101,8 +123,15 @@ public abstract partial class CandyWidget(
 
         var width = Width;
         var barHeight = BarHeight;
+        var mpHeight = MpBarHeight;
+        var shieldHeight = ShieldBarHeight;
+        var castHeight = CastBarHeight;
         var textSize = TextSize;
+        var numberSize = NumberSize;
+        var castTextSize = CastTextSize;
         var iconSize = IconSize;
+        var buffSize = BuffIconSize;
+        var debuffSize = DebuffIconSize;
         var showName = ShowName;
         var showJob = ShowJob && slot.Job != 0;
         var showHp = ShowHp;
@@ -114,16 +143,18 @@ public abstract partial class CandyWidget(
         var showDebuffs = ShowDebuffs;
         var showNumbers = ShowNumbers && GetConfigValue<string>("Numbers") != "None";
         var header = showName || showJob || showNumbers;
-        var mpHeight = System.Math.Max(4, barHeight - 4);
 
         var height = 8;
-        if (header) height += System.Math.Max(textSize + 6, iconSize) + 2;
+        if (header) height += System.Math.Max(textSize + 6, System.Math.Max(iconSize, numberSize)) + 2;
         if (showHp) height += barHeight + 3;
         if (showMp) height += mpHeight + 3;
-        if (showShieldBar) height += System.Math.Max(4, barHeight - 6) + 3;
-        if (showCast) height += barHeight + textSize + 4;
-        if (showBuffs) height += iconSize + 3;
-        if (showDebuffs) height += iconSize + 3;
+        if (showShieldBar) height += shieldHeight + 3;
+        if (showCast) height += castHeight + castTextSize + 4;
+        if (showBuffs) height += buffSize + 3;
+        if (showDebuffs) height += debuffSize + 3;
+
+        PlaceRows();
+        PlaceHeader();
 
         Node.Style.AutoSize = (AutoSize.Fit, AutoSize.Fit);
         Node.Style.Size = new(width, height);
@@ -164,7 +195,7 @@ public abstract partial class CandyWidget(
         NameNode.Style.Color = slot.Dead ? new(150, 150, 150) : new("Widget.Text");
 
         NumbersNode.Style.IsVisible = showNumbers;
-        NumbersNode.Style.FontSize = System.Math.Max(10, textSize - 1);
+        NumbersNode.Style.FontSize = numberSize;
         NumbersNode.NodeValue = showNumbers ? Numbers(slot) : string.Empty;
 
         HpTrackNode.Style.IsVisible = showHp;
@@ -195,7 +226,6 @@ public abstract partial class CandyWidget(
 
         if (showShieldBar)
         {
-            var shieldHeight = System.Math.Max(4, barHeight - 6);
             ShieldTrackNode.Style.Size = new(width - 8, shieldHeight);
             PaintBar(ShieldTrackNode, ShieldBarFillNode, slot.MaxHp == 0 ? 0 : slot.Shield / 100f, ShieldColor, shieldHeight);
         }
@@ -203,36 +233,43 @@ public abstract partial class CandyWidget(
         if (showCast)
         {
             var casting = subject.Cast;
-            CastNameNode.Style.FontSize = System.Math.Max(10, textSize - 1);
+            CastNameNode.Style.FontSize = castTextSize;
             CastNameNode.NodeValue = casting?.Name ?? string.Empty;
-            CastTrackNode.Style.Size = new(width - 8, barHeight);
-            PaintBar(CastTrackNode, CastFillNode, casting?.Progress ?? 0, CastColor, barHeight);
+            CastTrackNode.Style.Size = new(width - 8, castHeight);
+            PaintBar(CastTrackNode, CastFillNode, casting?.Progress ?? 0, CastColor, castHeight);
             CastWrapNode.Style.IsVisible = true;
         }
 
         if (showBuffs)
-            PaintStatuses(BuffRowNode, subject.Statuses, false, iconSize);
+            PaintStatuses(BuffRowNode, subject.Statuses, false, buffSize, BuffCount);
 
         if (showDebuffs)
-            PaintStatuses(DebuffRowNode, subject.Statuses, true, iconSize);
+            PaintStatuses(DebuffRowNode, subject.Statuses, true, debuffSize, DebuffCount);
 
         Node.Tooltip = slot.MaxHp > 0 ? $"{slot.Name}  {slot.Hp} / {slot.MaxHp}" : slot.Name;
     }
 
-    private void PaintStatuses(Node row, IReadOnlyList<HudReader.StatusIcon> statuses, bool debuff, int iconSize)
+    private void PaintStatuses(Node row, IReadOnlyList<HudReader.StatusIcon> statuses, bool debuff, int iconSize, int maxCount)
     {
-        var shown = 0;
+        var matched = 0;
+        var index = 0;
+        maxCount = System.Math.Clamp(maxCount, 0, row.ChildNodes.Count);
+
         for (var i = 0; i < row.ChildNodes.Count; i++)
         {
             var node = row.ChildNodes[i];
             HudReader.StatusIcon? match = null;
-            while (shown < statuses.Count)
+            if (matched < maxCount)
             {
-                var candidate = statuses[shown++];
-                if (candidate.Debuff == debuff)
+                while (index < statuses.Count)
                 {
-                    match = candidate;
-                    break;
+                    var candidate = statuses[index++];
+                    if (candidate.Debuff == debuff)
+                    {
+                        match = candidate;
+                        matched++;
+                        break;
+                    }
                 }
             }
 
@@ -250,6 +287,56 @@ public abstract partial class CandyWidget(
             node.Style.StrokeColor = debuff && icon.Cleansable ? new(90, 210, 110) : new(0);
             node.Tooltip = icon.Remaining > 0 ? $"{icon.Remaining:0}s" : null;
         }
+    }
+
+    private void PlaceRows()
+    {
+        var sig = System.HashCode.Combine(OrderName, OrderHp, OrderMp, OrderShield, OrderCast, OrderBuffs, OrderDebuffs);
+        if (sig == _rowOrder)
+            return;
+
+        _rowOrder = sig;
+        Place(Node,
+            (OrderName, HeaderNode),
+            (OrderHp, HpTrackNode),
+            (OrderMp, MpTrackNode),
+            (OrderShield, ShieldTrackNode),
+            (OrderCast, CastWrapNode),
+            (OrderBuffs, BuffRowNode),
+            (OrderDebuffs, DebuffRowNode),
+            (1000, DeathNode));
+    }
+
+    private void PlaceHeader()
+    {
+        var sig = System.HashCode.Combine(OrderJob, OrderLabel, OrderNumbers);
+        if (sig == _headerOrder)
+            return;
+
+        _headerOrder = sig;
+        Place(HeaderNode,
+            (OrderJob, IconNode),
+            (OrderLabel, NameNode),
+            (OrderNumbers, NumbersNode));
+    }
+
+    private static void Place(Node parent, params (int Order, Node Node)[] rows)
+    {
+        var ranked = new (int Order, int Tie, Node Node)[rows.Length];
+        for (var i = 0; i < rows.Length; i++)
+            ranked[i] = (rows[i].Order, i, rows[i].Node);
+
+        System.Array.Sort(ranked, static (a, b) =>
+        {
+            var order = a.Order.CompareTo(b.Order);
+            return order != 0 ? order : a.Tie.CompareTo(b.Tie);
+        });
+
+        foreach (var row in ranked)
+            parent.RemoveChild(row.Node);
+
+        foreach (var row in ranked)
+            parent.AppendChild(row.Node);
     }
 
     private static void PaintBar(Node track, Node fill, float fraction, Color color, int height)
@@ -317,6 +404,11 @@ public abstract partial class CandyWidget(
     private static float Fraction(uint current, uint max)
     {
         return max == 0 ? 0 : current / (float)max;
+    }
+
+    protected static IntegerWidgetConfigVariable Layout(string id, string name, int value)
+    {
+        return new IntegerWidgetConfigVariable(id, name, "Lower numbers come first. Rows stack downward. Job, name, and numbers run left to right.", value, 0, 100);
     }
 
     protected static IEnumerable<IWidgetConfigVariable> NumberOptions()

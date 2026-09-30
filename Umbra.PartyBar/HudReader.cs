@@ -195,7 +195,7 @@ internal static unsafe class HudReader
         {
             foreach (var status in actor.StatusList)
             {
-                if (StatusBuffer.Count >= 16 || status.StatusId == 0)
+                if (StatusBuffer.Count >= 32 || status.StatusId == 0)
                     continue;
 
                 if (!TryDescribe(status.StatusId, out var icon, out var debuff, out var cleansable))
@@ -208,7 +208,7 @@ internal static unsafe class HudReader
         {
             var count = System.Math.Min((int)member->StatusManager.NumValidStatuses, 30);
             var first = (GameStatus*)((byte*)member + 0x8);
-            for (var i = 0; i < count && StatusBuffer.Count < 16; i++)
+            for (var i = 0; i < count && StatusBuffer.Count < 32; i++)
             {
                 var status = first[i];
                 if (status.StatusId == 0)
