@@ -1,4 +1,4 @@
-# Party Slot
+# Candybars
 
 One Umbra widget, one person. Add a copy for every slot and stack them on a vertical aux bar. Use Umbra's Separator between raid groups.
 
@@ -17,8 +17,8 @@ Shield is drawn on the HP bar only while that character is loaded. Alliance memb
 Umbra → Settings → Plugins:
 
 - Owner: `XozaShadow`
-- Repository: `Umbra.PartyBar`
+- Repository: `Candybars`
 
 Or install `Umbra.PartyBar.dll` from the latest release with **Install from file**.
 
-Then add **Party Slot** to a vertical aux bar, duplicate it, and set Who on each copy.
+Then add **Candybar** to a vertical aux bar, duplicate it, and set Who on each copy.

@@ -12,7 +12,7 @@ public sealed partial class PartySlotWidget
             new SelectWidgetConfigVariable(
                 "Who",
                 "Who",
-                "Which person this copy of the bar follows. Add another Party Slot widget for the next person.",
+                "Which person this copy follows. Add another Candybar for the next person.",
                 "p1",
                 WhoOptions()
             ),

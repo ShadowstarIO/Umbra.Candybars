@@ -21,11 +21,11 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <ProductName>Party Slot</ProductName>
+        <ProductName>Candybars</ProductName>
         <Authors>XozaShadow</Authors>
-        <Version>1.0.0.0</Version>
-        <Description>One Umbra toolbar bar per party or alliance slot.</Description>
-        <PackageProjectUrl>https://github.com/XozaShadow/Umbra.PartyBar</PackageProjectUrl>
+        <Version>1.0.1.0</Version>
+        <Description>One Umbra bar per party or alliance slot.</Description>
+        <PackageProjectUrl>https://github.com/XozaShadow/Candybars</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
     </PropertyGroup>

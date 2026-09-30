@@ -9,7 +9,7 @@ namespace Umbra.PartyBar.Widgets;
 
 [ToolbarWidget(
     "PartySlot",
-    "Party Slot",
+    "Candybar",
     "One bar for one person. Add a copy for each slot, then stack them on a vertical aux bar."
 )]
 public sealed partial class PartySlotWidget(
@@ -24,7 +24,7 @@ public sealed partial class PartySlotWidget(
 
     public override string GetInstanceName()
     {
-        return $"Party Slot · {WhoLabel(GetConfigValue<string>("Who"))}";
+        return $"Candybar · {WhoLabel(GetConfigValue<string>("Who"))}";
     }
 
     protected override void Initialize() { }
