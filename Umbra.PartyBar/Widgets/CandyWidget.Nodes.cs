@@ -144,12 +144,12 @@ public abstract partial class CandyWidget
                 new()
                 {
                     FontSize = 12,
-                    Color = new("Widget.Text"),
-                    OutlineColor = new("Widget.TextOutline"),
+                    Color = new(255, 255, 255),
+                    OutlineColor = new(0, 0, 0),
                     OutlineSize = 1,
-                    Anchor = Anchor.MiddleRight,
+                    Anchor = Anchor.TopLeft,
                     TextAlign = Anchor.MiddleRight,
-                    TextOverflow = false,
+                    TextOverflow = true,
                     WordWrap = false,
                 }
             ),

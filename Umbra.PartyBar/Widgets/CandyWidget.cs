@@ -239,7 +239,20 @@ public abstract partial class CandyWidget(
 
         NumbersNode.Style.IsVisible = showNumbers;
         NumbersNode.Style.FontSize = numberSize;
+        NumbersNode.Style.Color = new(255, 255, 255);
+        NumbersNode.Style.OutlineColor = new(0, 0, 0);
+        NumbersNode.Style.OutlineSize = 1;
+        NumbersNode.Style.TextAlign = Anchor.MiddleRight;
+        NumbersNode.Style.TextOverflow = true;
+        NumbersNode.Style.WordWrap = false;
         NumbersNode.NodeValue = showNumbers ? Numbers(slot) : string.Empty;
+
+        if (!layered && showNumbers)
+        {
+            NumbersNode.Style.Anchor = Anchor.TopLeft;
+            NumbersNode.Style.Margin = new EdgeSize(0);
+            NumbersNode.Style.Size = new(System.Math.Max(1, width - 8), System.Math.Max(numberSize + 4, 14));
+        }
 
         HpTrackNode.Style.IsVisible = showHp;
         MpTrackNode.Style.IsVisible = showMp;
@@ -259,7 +272,8 @@ public abstract partial class CandyWidget(
             PlaceLayer(StateNode, 0, 0, width, height, 1);
             PlaceLayer(IconNode, JobX, JobY, iconSize, iconSize, JobZ);
             PlaceLayer(NameNode, NameX, NameY, Span(NameW, NameX, width), System.Math.Max(textSize + 4, iconSize), NameZ);
-            PlaceLayer(NumbersNode, NumX, NumY, Span(NumW, NumX, width), System.Math.Max(numberSize + 4, 14), NumZ);
+            var numberBox = FitBox(NumX, NumY, Span(NumW, NumX, width), System.Math.Max(numberSize + 6, barHeight), width, height);
+            PlaceLayer(NumbersNode, numberBox.X, numberBox.Y, numberBox.Width, numberBox.Height, System.Math.Max(NumZ, HpZ + 1));
             PlaceLayer(HpTrackNode, HpX, HpY, hpWidth, barHeight, HpZ);
             PlaceLayer(MpTrackNode, MpX, MpY, mpWidth, mpHeight, MpZ);
             PlaceLayer(ShieldTrackNode, ShieldX, ShieldY, shieldWidth, shieldHeight, ShieldZ);
@@ -320,7 +334,7 @@ public abstract partial class CandyWidget(
                 (1, StateNode),
                 (JobZ, IconNode),
                 (NameZ, NameNode),
-                (NumZ, NumbersNode),
+                (System.Math.Max(NumZ, HpZ + 1), NumbersNode),
                 (HpZ, HpTrackNode),
                 (MpZ, MpTrackNode),
                 (ShieldZ, ShieldTrackNode),
@@ -332,6 +346,15 @@ public abstract partial class CandyWidget(
         }
 
         Node.Tooltip = slot.MaxHp > 0 ? $"{slot.Name}  {slot.Hp} / {slot.MaxHp}" : slot.Name;
+    }
+
+    private static (int X, int Y, int Width, int Height) FitBox(int x, int y, int boxWidth, int boxHeight, int canvasWidth, int canvasHeight)
+    {
+        boxWidth = System.Math.Clamp(boxWidth, 1, System.Math.Max(1, canvasWidth));
+        boxHeight = System.Math.Clamp(boxHeight, 1, System.Math.Max(1, canvasHeight));
+        x = System.Math.Clamp(x, 0, System.Math.Max(0, canvasWidth - boxWidth));
+        y = System.Math.Clamp(y, 0, System.Math.Max(0, canvasHeight - boxHeight));
+        return (x, y, boxWidth, boxHeight);
     }
 
     private static int Span(int configured, int x, int canvas)
@@ -432,13 +455,14 @@ public abstract partial class CandyWidget(
             return "—";
 
         var percent = (int)(Fraction(slot.Hp, slot.MaxHp) * 100);
-        return GetConfigValue<string>("Numbers") switch
+        var mode = GetConfigValue<string>("Numbers").Replace(" ", "").Replace("/", "").ToLowerInvariant();
+        return mode switch
         {
-            "Percent" => $"{percent}%",
-            "Current" => slot.Hp.ToString(),
-            "CurrentMax" => $"{slot.Hp} / {slot.MaxHp}",
-            "CurrentMaxPercent" => $"{slot.Hp} / {slot.MaxHp} ({percent}%)",
-            _ => string.Empty,
+            "none" => string.Empty,
+            "current" => slot.Hp.ToString(),
+            "currentmax" => $"{slot.Hp} / {slot.MaxHp}",
+            "currentmaxpercent" => $"{slot.Hp} / {slot.MaxHp} ({percent}%)",
+            _ => $"{percent}%",
         };
     }
 
