@@ -50,20 +50,48 @@ public abstract partial class CandyWidget(
     protected virtual int DebuffIconSize => IconSize;
     protected virtual int BuffCount => 8;
     protected virtual int DebuffCount => 8;
-    protected virtual int OrderName => 10;
-    protected virtual int OrderJob => 0;
-    protected virtual int OrderLabel => 1;
-    protected virtual int OrderNumbers => 2;
-    protected virtual int OrderHp => 20;
-    protected virtual int OrderMp => 30;
-    protected virtual int OrderShield => 40;
-    protected virtual int OrderCast => 50;
-    protected virtual int OrderBuffs => 60;
-    protected virtual int OrderDebuffs => 70;
+    protected virtual bool UseLayers => false;
+    protected virtual int CanvasHeight => 64;
+    protected virtual int JobX => 4;
+    protected virtual int JobY => 4;
+    protected virtual int JobZ => 10;
+    protected virtual int NameX => 28;
+    protected virtual int NameY => 4;
+    protected virtual int NameW => 150;
+    protected virtual int NameZ => 11;
+    protected virtual int NumX => 182;
+    protected virtual int NumY => 4;
+    protected virtual int NumW => 74;
+    protected virtual int NumZ => 12;
+    protected virtual int HpX => 4;
+    protected virtual int HpY => 28;
+    protected virtual int HpW => 0;
+    protected virtual int HpZ => 20;
+    protected virtual int MpX => 4;
+    protected virtual int MpY => 42;
+    protected virtual int MpW => 0;
+    protected virtual int MpZ => 21;
+    protected virtual int ShieldX => 4;
+    protected virtual int ShieldY => 52;
+    protected virtual int ShieldW => 0;
+    protected virtual int ShieldZ => 22;
+    protected virtual int CastTextX => 4;
+    protected virtual int CastTextY => 60;
+    protected virtual int CastTextW => 0;
+    protected virtual int CastTextZ => 30;
+    protected virtual int CastX => 4;
+    protected virtual int CastY => 78;
+    protected virtual int CastW => 0;
+    protected virtual int CastZ => 31;
+    protected virtual int BuffX => 4;
+    protected virtual int BuffY => 92;
+    protected virtual int BuffZ => 40;
+    protected virtual int DebuffX => 4;
+    protected virtual int DebuffY => 114;
+    protected virtual int DebuffZ => 41;
     protected virtual int Width => GetConfigValue<int>("Width");
 
-    private int _rowOrder = int.MinValue;
-    private int _headerOrder = int.MinValue;
+    private int _layerSig = int.MinValue;
 
     public override string GetInstanceName()
     {
@@ -143,22 +171,38 @@ public abstract partial class CandyWidget(
         var showDebuffs = ShowDebuffs;
         var showNumbers = ShowNumbers && GetConfigValue<string>("Numbers") != "None";
         var header = showName || showJob || showNumbers;
+        var layered = UseLayers;
+        var canvasHeight = CanvasHeight;
 
         var height = 8;
-        if (header) height += System.Math.Max(textSize + 6, System.Math.Max(iconSize, numberSize)) + 2;
-        if (showHp) height += barHeight + 3;
-        if (showMp) height += mpHeight + 3;
-        if (showShieldBar) height += shieldHeight + 3;
-        if (showCast) height += castHeight + castTextSize + 4;
-        if (showBuffs) height += buffSize + 3;
-        if (showDebuffs) height += debuffSize + 3;
-
-        PlaceRows();
-        PlaceHeader();
+        if (!layered)
+        {
+            if (header) height += System.Math.Max(textSize + 6, System.Math.Max(iconSize, numberSize)) + 2;
+            if (showHp) height += barHeight + 3;
+            if (showMp) height += mpHeight + 3;
+            if (showShieldBar) height += shieldHeight + 3;
+            if (showCast) height += castHeight + castTextSize + 4;
+            if (showBuffs) height += buffSize + 3;
+            if (showDebuffs) height += debuffSize + 3;
+        }
+        else
+        {
+            height = canvasHeight;
+        }
 
         Node.Style.AutoSize = (AutoSize.Fit, AutoSize.Fit);
         Node.Style.Size = new(width, height);
-        SizerNode.Style.Size = new(width - 8, 0);
+        if (layered)
+        {
+            Node.Style.Padding = new(0);
+            SizerNode.Style.Anchor = Anchor.TopLeft;
+            SizerNode.Style.Margin = new EdgeSize(0);
+            SizerNode.Style.Size = new(width, height);
+        }
+        else
+        {
+            SizerNode.Style.Size = new(width - 8, 0);
+        }
 
         var decorated = GetConfigValue<bool>("Decorate");
         if (decorated) Node.TagsList.Remove("plain");
@@ -172,20 +216,19 @@ public abstract partial class CandyWidget(
         else
             Node.Style.StrokeColor = decorated ? new("Widget.Border") : new(0);
 
+        var boxWidth = layered ? width : width - 8;
+        var boxHeight = layered ? height : height - 8;
         StateNode.Style.IsVisible = slot.Dead && ShowDeathMark || cleansable;
-        StateNode.Style.Size = new(width - 8, height - 8);
+        StateNode.Style.Size = new(boxWidth, boxHeight);
         StateNode.Style.BackgroundColor = slot.Dead && ShowDeathMark
             ? new(120, 20, 20, (byte)70)
             : new(70, 180, 80, (byte)50);
 
         DeathNode.Style.IsVisible = slot.Dead && ShowDeathMark;
         DeathNode.Style.FontSize = textSize;
-        DeathNode.Style.Size = new(width - 8, height - 8);
+        DeathNode.Style.Size = new(boxWidth, boxHeight);
 
-        HeaderNode.Style.IsVisible = header;
-        HeaderNode.Style.Size = new(width - 8, System.Math.Max(textSize + 4, iconSize));
         IconNode.Style.IsVisible = showJob;
-        IconNode.Style.Size = new(iconSize, iconSize);
         if (showJob)
             IconNode.Style.IconId = 62100u + slot.Job;
 
@@ -201,13 +244,36 @@ public abstract partial class CandyWidget(
         HpTrackNode.Style.IsVisible = showHp;
         MpTrackNode.Style.IsVisible = showMp;
         ShieldTrackNode.Style.IsVisible = showShieldBar;
-        CastWrapNode.Style.IsVisible = showCast;
+        CastNameNode.Style.IsVisible = showCast;
+        CastTrackNode.Style.IsVisible = showCast;
         BuffRowNode.Style.IsVisible = showBuffs;
         DebuffRowNode.Style.IsVisible = showDebuffs;
 
+        var hpWidth = layered ? Span(HpW, HpX, width) : width - 8;
+        var mpWidth = layered ? Span(MpW, MpX, width) : width - 8;
+        var shieldWidth = layered ? Span(ShieldW, ShieldX, width) : width - 8;
+        var castWidth = layered ? Span(CastW, CastX, width) : width - 8;
+
+        if (layered)
+        {
+            PlaceLayer(StateNode, 0, 0, width, height, 1);
+            PlaceLayer(IconNode, JobX, JobY, iconSize, iconSize, JobZ);
+            PlaceLayer(NameNode, NameX, NameY, Span(NameW, NameX, width), System.Math.Max(textSize + 4, iconSize), NameZ);
+            PlaceLayer(NumbersNode, NumX, NumY, Span(NumW, NumX, width), System.Math.Max(numberSize + 4, 14), NumZ);
+            PlaceLayer(HpTrackNode, HpX, HpY, hpWidth, barHeight, HpZ);
+            PlaceLayer(MpTrackNode, MpX, MpY, mpWidth, mpHeight, MpZ);
+            PlaceLayer(ShieldTrackNode, ShieldX, ShieldY, shieldWidth, shieldHeight, ShieldZ);
+            PlaceLayer(CastNameNode, CastTextX, CastTextY, Span(CastTextW, CastTextX, width), castTextSize + 4, CastTextZ);
+            PlaceLayer(CastTrackNode, CastX, CastY, castWidth, castHeight, CastZ);
+            PlaceLayer(BuffRowNode, BuffX, BuffY, System.Math.Max(buffSize, BuffCount * (buffSize + 1)), buffSize, BuffZ);
+            PlaceLayer(DebuffRowNode, DebuffX, DebuffY, System.Math.Max(debuffSize, DebuffCount * (debuffSize + 1)), debuffSize, DebuffZ);
+            PlaceLayer(DeathNode, 0, 0, width, height, 200);
+        }
+
         if (showHp)
         {
-            HpTrackNode.Style.Size = new(width - 8, barHeight);
+            if (!layered)
+                HpTrackNode.Style.Size = new(hpWidth, barHeight);
             PaintBar(HpTrackNode, HpFillNode, slot.Dead ? 1f : Fraction(slot.Hp, slot.MaxHp), slot.Dead ? DeadColor : BarColor(slot.Job), barHeight);
         }
 
@@ -220,13 +286,15 @@ public abstract partial class CandyWidget(
 
         if (showMp)
         {
-            MpTrackNode.Style.Size = new(width - 8, mpHeight);
+            if (!layered)
+                MpTrackNode.Style.Size = new(mpWidth, mpHeight);
             PaintBar(MpTrackNode, MpFillNode, Fraction(slot.Mp, slot.MaxMp), MpColor, mpHeight);
         }
 
         if (showShieldBar)
         {
-            ShieldTrackNode.Style.Size = new(width - 8, shieldHeight);
+            if (!layered)
+                ShieldTrackNode.Style.Size = new(shieldWidth, shieldHeight);
             PaintBar(ShieldTrackNode, ShieldBarFillNode, slot.MaxHp == 0 ? 0 : slot.Shield / 100f, ShieldColor, shieldHeight);
         }
 
@@ -235,9 +303,9 @@ public abstract partial class CandyWidget(
             var casting = subject.Cast;
             CastNameNode.Style.FontSize = castTextSize;
             CastNameNode.NodeValue = casting?.Name ?? string.Empty;
-            CastTrackNode.Style.Size = new(width - 8, castHeight);
+            if (!layered)
+                CastTrackNode.Style.Size = new(castWidth, castHeight);
             PaintBar(CastTrackNode, CastFillNode, casting?.Progress ?? 0, CastColor, castHeight);
-            CastWrapNode.Style.IsVisible = true;
         }
 
         if (showBuffs)
@@ -246,7 +314,64 @@ public abstract partial class CandyWidget(
         if (showDebuffs)
             PaintStatuses(DebuffRowNode, subject.Statuses, true, debuffSize, DebuffCount);
 
+        if (layered)
+        {
+            StackLayers(
+                (1, StateNode),
+                (JobZ, IconNode),
+                (NameZ, NameNode),
+                (NumZ, NumbersNode),
+                (HpZ, HpTrackNode),
+                (MpZ, MpTrackNode),
+                (ShieldZ, ShieldTrackNode),
+                (CastTextZ, CastNameNode),
+                (CastZ, CastTrackNode),
+                (BuffZ, BuffRowNode),
+                (DebuffZ, DebuffRowNode),
+                (200, DeathNode));
+        }
+
         Node.Tooltip = slot.MaxHp > 0 ? $"{slot.Name}  {slot.Hp} / {slot.MaxHp}" : slot.Name;
+    }
+
+    private static int Span(int configured, int x, int canvas)
+    {
+        return configured > 0 ? configured : System.Math.Max(1, canvas - System.Math.Max(0, x));
+    }
+
+    private static void PlaceLayer(Node node, int x, int y, int width, int height, int z)
+    {
+        node.Style.Anchor = Anchor.None;
+        node.Style.Margin = new EdgeSize(y, 0, 0, x);
+        node.Style.Size = new(System.Math.Max(1, width), System.Math.Max(1, height));
+        node.SortIndex = z;
+    }
+
+    private void StackLayers(params (int Z, Node Node)[] layers)
+    {
+        var sig = 17;
+        foreach (var layer in layers)
+            sig = System.HashCode.Combine(sig, layer.Z);
+
+        if (sig == _layerSig)
+            return;
+
+        _layerSig = sig;
+        var ranked = new (int Z, int Tie, Node Node)[layers.Length];
+        for (var i = 0; i < layers.Length; i++)
+            ranked[i] = (layers[i].Z, i, layers[i].Node);
+
+        System.Array.Sort(ranked, static (a, b) =>
+        {
+            var order = a.Z.CompareTo(b.Z);
+            return order != 0 ? order : a.Tie.CompareTo(b.Tie);
+        });
+
+        foreach (var layer in ranked)
+            Node.RemoveChild(layer.Node);
+
+        foreach (var layer in ranked)
+            Node.AppendChild(layer.Node);
     }
 
     private void PaintStatuses(Node row, IReadOnlyList<HudReader.StatusIcon> statuses, bool debuff, int iconSize, int maxCount)
@@ -287,56 +412,6 @@ public abstract partial class CandyWidget(
             node.Style.StrokeColor = debuff && icon.Cleansable ? new(90, 210, 110) : new(0);
             node.Tooltip = icon.Remaining > 0 ? $"{icon.Remaining:0}s" : null;
         }
-    }
-
-    private void PlaceRows()
-    {
-        var sig = System.HashCode.Combine(OrderName, OrderHp, OrderMp, OrderShield, OrderCast, OrderBuffs, OrderDebuffs);
-        if (sig == _rowOrder)
-            return;
-
-        _rowOrder = sig;
-        Place(Node,
-            (OrderName, HeaderNode),
-            (OrderHp, HpTrackNode),
-            (OrderMp, MpTrackNode),
-            (OrderShield, ShieldTrackNode),
-            (OrderCast, CastWrapNode),
-            (OrderBuffs, BuffRowNode),
-            (OrderDebuffs, DebuffRowNode),
-            (1000, DeathNode));
-    }
-
-    private void PlaceHeader()
-    {
-        var sig = System.HashCode.Combine(OrderJob, OrderLabel, OrderNumbers);
-        if (sig == _headerOrder)
-            return;
-
-        _headerOrder = sig;
-        Place(HeaderNode,
-            (OrderJob, IconNode),
-            (OrderLabel, NameNode),
-            (OrderNumbers, NumbersNode));
-    }
-
-    private static void Place(Node parent, params (int Order, Node Node)[] rows)
-    {
-        var ranked = new (int Order, int Tie, Node Node)[rows.Length];
-        for (var i = 0; i < rows.Length; i++)
-            ranked[i] = (rows[i].Order, i, rows[i].Node);
-
-        System.Array.Sort(ranked, static (a, b) =>
-        {
-            var order = a.Order.CompareTo(b.Order);
-            return order != 0 ? order : a.Tie.CompareTo(b.Tie);
-        });
-
-        foreach (var row in ranked)
-            parent.RemoveChild(row.Node);
-
-        foreach (var row in ranked)
-            parent.AppendChild(row.Node);
     }
 
     private static void PaintBar(Node track, Node fill, float fraction, Color color, int height)
@@ -406,9 +481,9 @@ public abstract partial class CandyWidget(
         return max == 0 ? 0 : current / (float)max;
     }
 
-    protected static IntegerWidgetConfigVariable Layout(string id, string name, int value)
+    protected static IntegerWidgetConfigVariable Spot(string id, string name, int value, int min = -200, int max = 800)
     {
-        return new IntegerWidgetConfigVariable(id, name, "Lower numbers come first. Rows stack downward. Job, name, and numbers run left to right.", value, 0, 100);
+        return new IntegerWidgetConfigVariable(id, name, "From the top-left of this bar. Width 0 fills the rest. Higher layer numbers draw on top.", value, min, max);
     }
 
     protected static IEnumerable<IWidgetConfigVariable> NumberOptions()

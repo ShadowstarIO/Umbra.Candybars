@@ -10,7 +10,6 @@ public abstract partial class CandyWidget
     private Node SizerNode => Node.QuerySelector("#sizer")!;
     private Node StateNode => Node.QuerySelector("#state")!;
     private Node DeathNode => Node.QuerySelector("#death")!;
-    private Node HeaderNode => Node.QuerySelector("#header")!;
     private Node IconNode => Node.QuerySelector("#icon")!;
     private Node NameNode => Node.QuerySelector("#name")!;
     private Node NumbersNode => Node.QuerySelector("#numbers")!;
@@ -21,7 +20,6 @@ public abstract partial class CandyWidget
     private Node MpFillNode => Node.QuerySelector("#mp-fill")!;
     private Node ShieldTrackNode => Node.QuerySelector("#shield-bar")!;
     private Node ShieldBarFillNode => Node.QuerySelector("#shield-bar-fill")!;
-    private Node CastWrapNode => Node.QuerySelector("#cast")!;
     private Node CastNameNode => Node.QuerySelector("#cast-name")!;
     private Node CastTrackNode => Node.QuerySelector("#cast-track")!;
     private Node CastFillNode => Node.QuerySelector("#cast-fill")!;
@@ -38,30 +36,14 @@ public abstract partial class CandyWidget
             [
                 new() { Id = "sizer", ClassList = ["sizer"] },
                 new() { Id = "state", ClassList = ["state"] },
-                new()
-                {
-                    Id = "header",
-                    ClassList = ["header"],
-                    ChildNodes =
-                    [
-                        new() { Id = "icon", ClassList = ["icon"] },
-                        new() { Id = "name", ClassList = ["name"] },
-                        new() { Id = "numbers", ClassList = ["numbers"] },
-                    ],
-                },
+                new() { Id = "icon", ClassList = ["icon"] },
+                new() { Id = "name", ClassList = ["name"] },
+                new() { Id = "numbers", ClassList = ["numbers"] },
                 Track("hp", "hp-fill", "shield-fill"),
                 Track("mp", "mp-fill"),
                 Track("shield-bar", "shield-bar-fill"),
-                new()
-                {
-                    Id = "cast",
-                    ClassList = ["cast"],
-                    ChildNodes =
-                    [
-                        new() { Id = "cast-name", ClassList = ["cast-name"] },
-                        Track("cast-track", "cast-fill"),
-                    ],
-                },
+                new() { Id = "cast-name", ClassList = ["cast-name"] },
+                Track("cast-track", "cast-fill"),
                 StatusRow("buffs"),
                 StatusRow("debuffs"),
                 new() { Id = "death", ClassList = ["death"], NodeValue = "DEAD" },
@@ -151,8 +133,7 @@ public abstract partial class CandyWidget
                     Color = new("Widget.Text"),
                     OutlineColor = new("Widget.TextOutline"),
                     OutlineSize = 1,
-                    AutoSize = (AutoSize.Grow, AutoSize.Fit),
-                    Anchor = Anchor.MiddleLeft,
+                    Anchor = Anchor.TopLeft,
                     TextAlign = Anchor.MiddleLeft,
                     TextOverflow = false,
                     WordWrap = false,

@@ -15,7 +15,9 @@ Build a party and target HUD out of Umbra bars. Each widget is one person. Stack
 | Candy Debuffs | Debuff icons, green border if cleansable |
 | Candy Status | Buffs and debuffs, buffs smaller and on top |
 
-On Candybar, each row has its own size and a position number. Lower numbers sit higher. Job icon, name, and numbers can be reordered the same way. Buff and debuff counts go up to 16. Candy Status starts with buffs on top and slightly larger debuffs underneath.
+On Candybar and Candy Status, the bar is a canvas. Each piece has X, Y, width, and a layer number. Higher layers draw on top, so bars, text, and icons can overlap. A width of 0 fills the rest of the bar. Hidden pieces keep their spot until you move the others or shrink Bar height.
+
+The other widgets stay single-purpose. Stack those when Umbra should place whole pieces, and use Candybar when you want one designed group.
 
 Every widget can follow:
 

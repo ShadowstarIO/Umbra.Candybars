@@ -151,24 +151,35 @@ public sealed class CandyStatusWidget(
     protected override bool ShowBuffs => true;
     protected override bool ShowDebuffs => true;
     protected override bool HighlightCleansable => true;
+    protected override bool UseLayers => true;
+    protected override int CanvasHeight => GetConfigValue<int>("CanvasHeight");
     protected override int BuffIconSize => GetConfigValue<int>("BuffIconSize");
     protected override int DebuffIconSize => GetConfigValue<int>("DebuffIconSize");
     protected override int BuffCount => GetConfigValue<int>("BuffCount");
     protected override int DebuffCount => GetConfigValue<int>("DebuffCount");
-    protected override int OrderBuffs => GetConfigValue<int>("OrderBuffs");
-    protected override int OrderDebuffs => GetConfigValue<int>("OrderDebuffs");
+    protected override int BuffX => GetConfigValue<int>("BuffX");
+    protected override int BuffY => GetConfigValue<int>("BuffY");
+    protected override int BuffZ => GetConfigValue<int>("BuffZ");
+    protected override int DebuffX => GetConfigValue<int>("DebuffX");
+    protected override int DebuffY => GetConfigValue<int>("DebuffY");
+    protected override int DebuffZ => GetConfigValue<int>("DebuffZ");
 
     protected override IEnumerable<IWidgetConfigVariable> GetConfigVariables()
     {
         foreach (var variable in base.GetConfigVariables())
             yield return variable;
 
+        yield return new IntegerWidgetConfigVariable("CanvasHeight", "Bar height", "The canvas both rows are placed on.", 60, 20, 400);
         yield return new IntegerWidgetConfigVariable("BuffIconSize", "Buff icon size", null, 18, 10, 64);
         yield return new IntegerWidgetConfigVariable("DebuffIconSize", "Debuff icon size", null, 26, 10, 64);
         yield return new IntegerWidgetConfigVariable("BuffCount", "Buff count", null, 8, 0, 16);
         yield return new IntegerWidgetConfigVariable("DebuffCount", "Debuff count", null, 8, 0, 16);
-        yield return Layout("OrderBuffs", "Buff row", 10);
-        yield return Layout("OrderDebuffs", "Debuff row", 20);
+        yield return Spot("BuffX", "Buffs X", 4);
+        yield return Spot("BuffY", "Buffs Y", 4);
+        yield return Spot("BuffZ", "Buffs layer", 10, 0, 100);
+        yield return Spot("DebuffX", "Debuffs X", 4);
+        yield return Spot("DebuffY", "Debuffs Y", 26);
+        yield return Spot("DebuffZ", "Debuffs layer", 20, 0, 100);
     }
 }
 
