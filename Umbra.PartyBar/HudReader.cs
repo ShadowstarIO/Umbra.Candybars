@@ -5,6 +5,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Group;
+using FFXIVClientStructs.FFXIV.Client.UI.Arrays;
 using ExcelAction = Lumina.Excel.Sheets.Action;
 using ExcelStatus = Lumina.Excel.Sheets.Status;
 using Umbra.Common;
@@ -109,9 +110,9 @@ internal static unsafe class HudReader
         if (who == "choco") return "Chocobo";
         if (who == "pet") return "Pet";
         if (who.Length >= 2 && who[0] == 'p' && int.TryParse(who[1..], out var party))
-            return $"Party {party}";
+            return $"F{party}";
         if (who.Length >= 2 && who[0] is 'a' or 'b' or 'c' && int.TryParse(who[1..], out var index))
-            return $"Alliance {char.ToUpperInvariant(who[0])}{index}";
+            return $"{char.ToUpperInvariant(who[0])}{index}";
 
         return who;
     }
@@ -129,12 +130,12 @@ internal static unsafe class HudReader
         };
 
         for (var i = 1; i <= 8; i++)
-            options[$"p{i}"] = $"Party {i}";
+            options[$"p{i}"] = $"F{i}";
 
         foreach (var group in new[] { 'a', 'b', 'c' })
         {
             for (var i = 1; i <= 8; i++)
-                options[$"{group}{i}"] = $"Alliance {char.ToUpperInvariant(group)}{i}";
+                options[$"{group}{i}"] = $"{char.ToUpperInvariant(group)}{i}";
         }
 
         return options;
@@ -188,20 +189,91 @@ internal static unsafe class HudReader
 
     private static Subject? ReadParty(int index)
     {
-        var group = Group();
-        if (group == null || index < 0)
+        if (index is < 0 or > 7)
             return null;
+
+        var list = PartyListNumberArray.Instance();
+        if (list != null)
+        {
+            var count = list->PartyListCount;
+            if (count < 0)
+                count = 0;
+            if (count > 8)
+                count = 8;
+
+            if (index < count)
+                return FromEntity(list->PartyMembers[index].EntityId) ?? (index == 0 ? ReadMe() : null);
+
+            var trustIndex = index - count;
+            var trusts = list->TrustCount;
+            if (trusts < 0)
+                trusts = 0;
+            if (trusts > 7)
+                trusts = 7;
+
+            if (trustIndex < trusts)
+                return FromEntity(list->TrustMembers[trustIndex].EntityId);
+
+            if (count == 0 && index == 0)
+                return ReadMe();
+
+            return null;
+        }
+
+        var group = Group();
+        if (group == null)
+            return index == 0 ? ReadMe() : null;
 
         return FromMember(group->GetPartyMemberByIndex(index));
     }
 
     private static Subject? ReadAlliance(int groupIndex, int index)
     {
+        if (groupIndex is < 0 or > 2 || index is < 0 or > 7)
+            return null;
+
+        var list = AllianceListNumberArray.Instance();
+        if (list != null && groupIndex < list->PartyCount)
+        {
+            var party = list->Groups[groupIndex];
+            if (index >= party.MemberCount)
+                return null;
+
+            return FromEntity(party.Members[index].EntityId);
+        }
+
         var group = Group();
-        if (group == null || index < 0)
+        if (group == null)
             return null;
 
         return FromMember(group->GetAllianceMemberByGroupAndIndex(groupIndex, index));
+    }
+
+    private static Subject? FromEntity(uint entityId)
+    {
+        if (entityId is 0 or 0xE0000000)
+            return null;
+
+        var group = Group();
+        if (group != null)
+        {
+            var member = group->GetPartyMemberByEntityId(entityId);
+            if (Occupied(member))
+                return FromMember(member);
+
+            for (var party = 0; party < 3; party++)
+            {
+                for (var slot = 0; slot < 8; slot++)
+                {
+                    member = group->GetAllianceMemberByGroupAndIndex(party, slot);
+                    if (Occupied(member) && member->EntityId == entityId)
+                        return FromMember(member);
+                }
+            }
+        }
+
+        var actor = Objects.SearchById(entityId);
+        return actor == null ? null : FromActor(actor);
     }
 
     private static GroupManager.Group* Group()

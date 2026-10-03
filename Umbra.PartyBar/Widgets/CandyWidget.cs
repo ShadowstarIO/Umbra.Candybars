@@ -143,7 +143,7 @@ public abstract partial class CandyWidget(
     {
         return
         [
-            new SelectWidgetConfigVariable("Who", "Who", "Which person this bar follows.", "p1", HudReader.WhoOptions()) { Category = "Bar" },
+            new SelectWidgetConfigVariable("Who", "Who", "F1 to F8 follow the party list, including your sort settings. A1, B1, and C1 follow the alliance list.", "p1", HudReader.WhoOptions()) { Category = "Bar" },
             new BooleanWidgetConfigVariable("Preview", "Preview layout", "Draw every piece with sample bars, icons, and text so you can place them without a party.", false) { Category = "Bar" },
             new BooleanWidgetConfigVariable("HideWhenEmpty", "Hide when empty", "The stack closes up. Turn this off while placing bars.", true) { Category = "Bar" },
             new BooleanWidgetConfigVariable("Decorate", "Background", "Turn off to hide the widget background and border.", true) { Category = "Bar" },
