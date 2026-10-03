@@ -237,6 +237,7 @@ public abstract partial class CandyWidget(
 
         NameNode.Style.IsVisible = showName;
         NameNode.Style.FontSize = textSize;
+        NameNode.Style.TextAlign = Anchor.MiddleCenter;
         NameNode.NodeValue = showName ? slot.Name : string.Empty;
         NameNode.Style.Color = slot.Dead ? new(150, 150, 150) : new("Widget.Text");
 
@@ -245,17 +246,12 @@ public abstract partial class CandyWidget(
         NumbersNode.Style.Color = new(255, 255, 255);
         NumbersNode.Style.OutlineColor = new(0, 0, 0);
         NumbersNode.Style.OutlineSize = 1;
-        NumbersNode.Style.TextAlign = Anchor.MiddleRight;
+        NumbersNode.Style.TextAlign = Anchor.MiddleCenter;
         NumbersNode.Style.TextOverflow = true;
         NumbersNode.Style.WordWrap = false;
         NumbersNode.NodeValue = showNumbers ? Numbers(slot) : string.Empty;
 
-        if (!layered && showNumbers)
-        {
-            NumbersNode.Style.Anchor = Anchor.TopLeft;
-            NumbersNode.Style.Margin = new EdgeSize(0);
-            NumbersNode.Style.Size = new(System.Math.Max(1, width - 8), System.Math.Max(numberSize + 4, 14));
-        }
+        IconNode.Style.ImageScaleMode = ImageScaleMode.Adapt;
 
         HpTrackNode.Style.IsVisible = showHp;
         MpTrackNode.Style.IsVisible = showMp;
@@ -265,33 +261,36 @@ public abstract partial class CandyWidget(
         BuffRowNode.Style.IsVisible = showBuffs;
         DebuffRowNode.Style.IsVisible = showDebuffs;
 
-        var hpWidth = layered ? Span(HpW, HpX, width) : width - 8;
-        var mpWidth = layered ? Span(MpW, MpX, width) : width - 8;
-        var shieldWidth = layered ? Span(ShieldW, ShieldX, width) : width - 8;
-        var castWidth = layered ? Span(CastW, CastX, width) : width - 8;
+        var hpWidth = layered ? Span(HpW, HpX, width) : System.Math.Max(1, width - 4);
+        var mpWidth = layered ? Span(MpW, MpX, width) : System.Math.Max(1, width - 4);
+        var shieldWidth = layered ? Span(ShieldW, ShieldX, width) : System.Math.Max(1, width - 4);
+        var castWidth = layered ? Span(CastW, CastX, width) : System.Math.Max(1, width - 4);
+        var nameBox = System.Math.Max(textSize + 4, 12);
+        var numberBox = System.Math.Max(numberSize + 4, 12);
 
         if (layered)
         {
+            var shift = CenterShift(height, showJob, showName, showNumbers, showHp, showMp, showShieldBar, showCast, showBuffs, showDebuffs, iconSize, nameBox, numberBox, barHeight, mpHeight, shieldHeight, castTextSize + 4, castHeight, buffSize, debuffSize);
             PlaceLayer(StateNode, 0, 0, width, height, 1);
-            PlaceLayer(IconNode, JobX, JobY, iconSize, iconSize, JobZ);
-            PlaceLayer(NameNode, NameX, NameY, Span(NameW, NameX, width), System.Math.Max(textSize + 4, iconSize), NameZ);
-            PlaceLayer(NumbersNode, NumX, NumY, Span(NumW, NumX, width), System.Math.Max(numberSize + 4, 12), System.Math.Max(NumZ, HpZ + 1));
-            PlaceLayer(HpTrackNode, HpX, HpY, hpWidth, barHeight, HpZ);
-            PlaceLayer(MpTrackNode, MpX, MpY, mpWidth, mpHeight, MpZ);
-            PlaceLayer(ShieldTrackNode, ShieldX, ShieldY, shieldWidth, shieldHeight, ShieldZ);
-            PlaceLayer(CastNameNode, CastTextX, CastTextY, Span(CastTextW, CastTextX, width), castTextSize + 4, CastTextZ);
-            PlaceLayer(CastTrackNode, CastX, CastY, castWidth, castHeight, CastZ);
-            PlaceLayer(BuffRowNode, BuffX, BuffY, System.Math.Max(buffSize, BuffCount * (buffSize + 1)), buffSize, BuffZ);
-            PlaceLayer(DebuffRowNode, DebuffX, DebuffY, System.Math.Max(debuffSize, DebuffCount * (debuffSize + 1)), debuffSize, DebuffZ);
+            PlaceLayer(IconNode, JobX, Shifted(JobY, iconSize, height, shift), iconSize, iconSize, JobZ);
+            PlaceLayer(NameNode, NameX, Shifted(NameY, nameBox, height, shift), Span(NameW, NameX, width), nameBox, NameZ);
+            PlaceLayer(NumbersNode, NumX, Shifted(NumY, numberBox, height, shift), Span(NumW, NumX, width), numberBox, System.Math.Max(NumZ, HpZ + 1));
+            PlaceLayer(HpTrackNode, HpX, Shifted(HpY, barHeight, height, shift), hpWidth, barHeight, HpZ);
+            PlaceLayer(MpTrackNode, MpX, Shifted(MpY, mpHeight, height, shift), mpWidth, mpHeight, MpZ);
+            PlaceLayer(ShieldTrackNode, ShieldX, Shifted(ShieldY, shieldHeight, height, shift), shieldWidth, shieldHeight, ShieldZ);
+            PlaceLayer(CastNameNode, CastTextX, Shifted(CastTextY, castTextSize + 4, height, shift), Span(CastTextW, CastTextX, width), castTextSize + 4, CastTextZ);
+            PlaceLayer(CastTrackNode, CastX, Shifted(CastY, castHeight, height, shift), castWidth, castHeight, CastZ);
+            PlaceLayer(BuffRowNode, BuffX, Shifted(BuffY, buffSize, height, shift), System.Math.Max(buffSize, BuffCount * (buffSize + 1)), buffSize, BuffZ);
+            PlaceLayer(DebuffRowNode, DebuffX, Shifted(DebuffY, debuffSize, height, shift), System.Math.Max(debuffSize, DebuffCount * (debuffSize + 1)), debuffSize, DebuffZ);
             PlaceLayer(DeathNode, 0, 0, width, height, 200);
+        }
+        else
+        {
+            PlaceFitted(width, height, showJob, showName, showNumbers, showHp, showMp, showShieldBar, showCast, showBuffs, showDebuffs, iconSize, nameBox, numberBox, barHeight, mpHeight, shieldHeight, castTextSize, castHeight, buffSize, debuffSize, hpWidth);
         }
 
         if (showHp)
-        {
-            if (!layered)
-                HpTrackNode.Style.Size = new(hpWidth, barHeight);
             PaintBar(HpTrackNode, HpFillNode, slot.Dead ? 1f : Fraction(slot.Hp, slot.MaxHp), slot.Dead ? DeadColor : BarColor(slot.Job), barHeight);
-        }
 
         ShieldNode.Style.IsVisible = false;
         if (showHp && showShield)
@@ -301,34 +300,31 @@ public abstract partial class CandyWidget(
         }
 
         if (showMp)
-        {
-            if (!layered)
-                MpTrackNode.Style.Size = new(mpWidth, mpHeight);
             PaintBar(MpTrackNode, MpFillNode, Fraction(slot.Mp, slot.MaxMp), MpColor, mpHeight);
-        }
 
         if (showShieldBar)
-        {
-            if (!layered)
-                ShieldTrackNode.Style.Size = new(shieldWidth, shieldHeight);
             PaintBar(ShieldTrackNode, ShieldBarFillNode, slot.MaxHp == 0 ? 0 : slot.Shield / 100f, ShieldColor, shieldHeight);
-        }
 
         if (showCast)
         {
             var casting = subject.Cast;
             CastNameNode.Style.FontSize = castTextSize;
+            CastNameNode.Style.TextAlign = Anchor.MiddleCenter;
             CastNameNode.NodeValue = casting?.Name ?? string.Empty;
-            if (!layered)
-                CastTrackNode.Style.Size = new(castWidth, castHeight);
             PaintBar(CastTrackNode, CastFillNode, casting?.Progress ?? 0, CastColor, castHeight);
         }
 
         if (showBuffs)
+        {
             PaintStatuses(BuffRowNode, subject.Statuses, false, buffSize, BuffCount);
+            CenterRow(BuffRowNode, buffSize);
+        }
 
         if (showDebuffs)
+        {
             PaintStatuses(DebuffRowNode, subject.Statuses, true, debuffSize, DebuffCount);
+            CenterRow(DebuffRowNode, debuffSize);
+        }
 
         if (layered)
         {
@@ -361,6 +357,217 @@ public abstract partial class CandyWidget(
         node.Style.Margin = new EdgeSize(y, 0, 0, x);
         node.Style.Size = new(System.Math.Max(1, width), System.Math.Max(1, height));
         node.SortIndex = z;
+    }
+
+    private int CenterShift(
+        int height,
+        bool job,
+        bool name,
+        bool numbers,
+        bool hp,
+        bool mp,
+        bool shield,
+        bool cast,
+        bool buffs,
+        bool debuffs,
+        int icon,
+        int nameBox,
+        int numberBox,
+        int bar,
+        int mpBar,
+        int shieldBar,
+        int castText,
+        int castBar,
+        int buff,
+        int debuff)
+    {
+        var top = int.MaxValue;
+        var bottom = int.MinValue;
+
+        void Box(bool show, int y, int box)
+        {
+            if (!show || box <= 0 || y < 0 || y + box > height + 1)
+                return;
+
+            if (y < top)
+                top = y;
+            if (y + box > bottom)
+                bottom = y + box;
+        }
+
+        Box(job, JobY, icon);
+        Box(name, NameY, nameBox);
+        Box(numbers, NumY, numberBox);
+        Box(hp, HpY, bar);
+        Box(mp, MpY, mpBar);
+        Box(shield, ShieldY, shieldBar);
+        Box(cast, CastTextY, castText);
+        Box(cast, CastY, castBar);
+        Box(buffs, BuffY, buff);
+        Box(debuffs, DebuffY, debuff);
+
+        if (bottom <= top)
+            return 0;
+
+        return (height - (bottom - top)) / 2 - top;
+    }
+
+    private static int Shifted(int y, int box, int height, int shift)
+    {
+        if (box <= 0 || y < 0 || y + box > height + 1)
+            return y;
+
+        return y + shift;
+    }
+
+    private void PlaceFitted(
+        int width,
+        int height,
+        bool job,
+        bool name,
+        bool numbers,
+        bool hp,
+        bool mp,
+        bool shield,
+        bool cast,
+        bool buffs,
+        bool debuffs,
+        int icon,
+        int nameBox,
+        int numberBox,
+        int bar,
+        int mpBar,
+        int shieldBar,
+        int castText,
+        int castBar,
+        int buff,
+        int debuff,
+        int barWidth)
+    {
+        PlaceLayer(StateNode, 0, 0, width, height, 1);
+        PlaceLayer(DeathNode, 0, 0, width, height, 200);
+
+        if (job && !name && !numbers && !hp && !mp && !shield && !cast && !buffs && !debuffs)
+        {
+            PlaceLayer(IconNode, (width - icon) / 2, (height - icon) / 2, icon, icon, 10);
+            return;
+        }
+
+        if (name && !job && !numbers && !hp && !mp && !shield && !cast && !buffs && !debuffs)
+        {
+            PlaceLayer(NameNode, 0, 0, width, height, 11);
+            return;
+        }
+
+        var gap = 2;
+        var x = 2;
+        var header = 0;
+        if (job)
+            header = System.Math.Max(header, icon);
+        if (name)
+            header = System.Math.Max(header, nameBox);
+        if (numbers && !hp)
+            header = System.Math.Max(header, numberBox);
+
+        var total = 0;
+        var blocks = 0;
+        void Count(int box)
+        {
+            if (box <= 0)
+                return;
+
+            total += box;
+            blocks++;
+        }
+
+        Count(header);
+        if (hp)
+            Count(bar);
+        if (mp)
+            Count(mpBar);
+        if (shield)
+            Count(shieldBar);
+        if (cast)
+            Count(castText + gap + castBar);
+        if (buffs)
+            Count(buff);
+        if (debuffs)
+            Count(debuff);
+        if (blocks > 1)
+            total += gap * (blocks - 1);
+
+        var y = (height - total) / 2;
+        if (header > 0)
+        {
+            var textX = job ? x + icon + 4 : 0;
+            var textW = job ? System.Math.Max(1, barWidth - icon - 4) : width;
+            if (job)
+                PlaceLayer(IconNode, name || numbers || hp ? x : (width - icon) / 2, y + (header - icon) / 2, icon, icon, 10);
+            if (name)
+                PlaceLayer(NameNode, textX, y + (header - nameBox) / 2, textW, nameBox, 11);
+            if (numbers && !hp)
+                PlaceLayer(NumbersNode, textX, y + (header - numberBox) / 2, textW, numberBox, 12);
+
+            y += header + gap;
+        }
+
+        if (hp)
+        {
+            PlaceLayer(HpTrackNode, x, y, barWidth, bar, 20);
+            if (numbers)
+                PlaceLayer(NumbersNode, x, y, barWidth, bar, 30);
+
+            y += bar + gap;
+        }
+
+        if (mp)
+        {
+            PlaceLayer(MpTrackNode, x, y, barWidth, mpBar, 21);
+            y += mpBar + gap;
+        }
+
+        if (shield)
+        {
+            PlaceLayer(ShieldTrackNode, x, y, barWidth, shieldBar, 22);
+            y += shieldBar + gap;
+        }
+
+        if (cast)
+        {
+            PlaceLayer(CastNameNode, 0, y, width, castText, 30);
+            y += castText + gap;
+            PlaceLayer(CastTrackNode, x, y, barWidth, castBar, 31);
+            y += castBar + gap;
+        }
+
+        if (buffs)
+        {
+            var row = System.Math.Max(buff, BuffCount * (buff + 1));
+            PlaceLayer(BuffRowNode, (width - row) / 2, y, row, buff, 40);
+            y += buff + gap;
+        }
+
+        if (debuffs)
+        {
+            var row = System.Math.Max(debuff, DebuffCount * (debuff + 1));
+            PlaceLayer(DebuffRowNode, (width - row) / 2, y, row, debuff, 41);
+        }
+    }
+
+    private static void CenterRow(Node row, int iconSize)
+    {
+        var shown = 0;
+        foreach (var child in row.ChildNodes)
+        {
+            if (child.Style.IsVisible == true)
+                shown++;
+        }
+
+        var width = row.Style.Size?.Width ?? 0;
+        var used = shown <= 0 ? 0 : shown * iconSize + (shown - 1);
+        var pad = System.Math.Max(0, (width - used) / 2);
+        row.Style.Padding = new EdgeSize(0, 0, 0, pad);
+        row.Style.Flow = Flow.Horizontal;
     }
 
     private void StackLayers(params (int Z, Node Node)[] layers)
@@ -437,6 +644,7 @@ public abstract partial class CandyWidget(
             width = track.ParentNode?.InnerWidth ?? 0;
 
         var span = (int)System.Math.Clamp(width * System.Math.Clamp(fraction, 0f, 1f), 0, System.Math.Max(0, width));
+        fill.Style.Anchor = Anchor.MiddleLeft;
         fill.Style.Size = new(span, height);
         fill.Style.BackgroundColor = color;
         fill.Style.IsVisible = span > 0;

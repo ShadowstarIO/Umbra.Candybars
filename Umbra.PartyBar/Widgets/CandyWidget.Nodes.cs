@@ -124,7 +124,7 @@ public abstract partial class CandyWidget
                     Anchor = Anchor.TopLeft,
                 }
             ),
-            new(".icon", new() { Anchor = Anchor.MiddleLeft, Size = new(20, 20) }),
+            new(".icon", new() { Anchor = Anchor.MiddleCenter, Size = new(20, 20), ImageScaleMode = ImageScaleMode.Adapt }),
             new(
                 ".name",
                 new()
@@ -134,7 +134,7 @@ public abstract partial class CandyWidget
                     OutlineColor = new("Widget.TextOutline"),
                     OutlineSize = 1,
                     Anchor = Anchor.TopLeft,
-                    TextAlign = Anchor.MiddleLeft,
+                    TextAlign = Anchor.MiddleCenter,
                     TextOverflow = false,
                     WordWrap = false,
                 }
@@ -148,7 +148,7 @@ public abstract partial class CandyWidget
                     OutlineColor = new(0, 0, 0),
                     OutlineSize = 1,
                     Anchor = Anchor.TopLeft,
-                    TextAlign = Anchor.MiddleRight,
+                    TextAlign = Anchor.MiddleCenter,
                     TextOverflow = true,
                     WordWrap = false,
                 }
@@ -162,7 +162,7 @@ public abstract partial class CandyWidget
                     BorderRadius = 2,
                 }
             ),
-            new(".fill", new() { Anchor = Anchor.TopLeft, BorderRadius = 2 }),
+            new(".fill", new() { Anchor = Anchor.MiddleLeft, BorderRadius = 2 }),
             new(
                 ".cast",
                 new()
@@ -180,6 +180,7 @@ public abstract partial class CandyWidget
                     Color = new("Widget.Text"),
                     OutlineSize = 1,
                     OutlineColor = new("Widget.TextOutline"),
+                    TextAlign = Anchor.MiddleCenter,
                     TextOverflow = false,
                     WordWrap = false,
                 }
@@ -202,9 +203,10 @@ public abstract partial class CandyWidget
                     Color = new(255, 255, 255),
                     OutlineColor = new(0, 0, 0),
                     OutlineSize = 1,
-                    TextAlign = Anchor.BottomRight,
+                    TextAlign = Anchor.MiddleCenter,
                     StrokeWidth = 1,
                     BorderRadius = 2,
+                    ImageScaleMode = ImageScaleMode.Adapt,
                 }
             ),
         ]
