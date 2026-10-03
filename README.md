@@ -15,13 +15,15 @@ Build a party and target HUD out of Umbra bars. Each widget is one person. Stack
 | Candy Debuffs | Debuff icons, green border if cleansable |
 | Candy Status | Buffs and debuffs, buffs smaller and on top |
 
-On Candybar and Candy Status, the bar is a canvas. Each piece has X, Y, width, and a layer number. Higher layers draw on top, so bars, text, and icons can overlap. A width of 0 fills the rest of the bar. Hidden pieces keep their spot until you move the others or shrink Bar height.
+Height 0 matches the toolbar, so a Candybar can sit next to the weather widget without stretching it. Pieces can use negative X and Y and hang off that slot. Set Height above 0 only when you want the widget to reserve that much vertical space.
 
-The other widgets stay single-purpose. Stack those when Umbra should place whole pieces, and use Candybar when you want one designed group.
+Layout on a Candybar starts as Compact. Choose Stacked if you want the old tall arrangement. After a layout is applied, the setting returns to Custom and your own X and Y edits stay.
+
+Who can also be Chocobo or Pet. Pet uses the battle pet, then a beast owned by you.
 
 Every widget can follow:
 
-- Me
+- Me, Chocobo, Pet
 - Target, Target of Target, Focus Target
 - Party 1–8
 - Alliance A1–A8, B1–B8, C1–C8

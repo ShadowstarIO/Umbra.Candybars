@@ -39,7 +39,6 @@ public sealed class PartySlotWidget(
     protected override int BuffCount => GetConfigValue<int>("BuffCount");
     protected override int DebuffCount => GetConfigValue<int>("DebuffCount");
     protected override bool UseLayers => true;
-    protected override int CanvasHeight => GetConfigValue<int>("CanvasHeight");
     protected override int JobX => GetConfigValue<int>("JobX");
     protected override int JobY => GetConfigValue<int>("JobY");
     protected override int JobZ => GetConfigValue<int>("JobZ");
@@ -130,43 +129,100 @@ public sealed class PartySlotWidget(
         yield return new IntegerWidgetConfigVariable("DebuffIconSize", "Debuff icon size", null, 22, 10, 64);
         yield return new IntegerWidgetConfigVariable("BuffCount", "Buff count", null, 8, 0, 16);
         yield return new IntegerWidgetConfigVariable("DebuffCount", "Debuff count", null, 8, 0, 16);
-        yield return new IntegerWidgetConfigVariable("CanvasHeight", "Bar height", "The canvas everything is placed on.", 148, 24, 600);
-        yield return Spot("JobX", "Job X", 4);
-        yield return Spot("JobY", "Job Y", 4);
+        yield return new SelectWidgetConfigVariable(
+            "Layout",
+            "Layout",
+            "Pick a starting arrangement. It is applied once, then this returns to Custom so your own X and Y edits stay.",
+            "Custom",
+            new()
+            {
+                { "Custom", "Custom" },
+                { "Compact", "Compact, fits the toolbar" },
+                { "Stacked", "Stacked, reserves height" },
+            }
+        );
+        var stamp = new StringWidgetConfigVariable("LayoutStamp", "Layout stamp", null, "");
+        stamp.IsHidden = true;
+        yield return stamp;
+        yield return Spot("JobX", "Job X", 2);
+        yield return Spot("JobY", "Job Y", 5);
         yield return Spot("JobZ", "Job layer", 10, 0, 100);
-        yield return Spot("NameX", "Name X", 28);
-        yield return Spot("NameY", "Name Y", 4);
-        yield return Spot("NameW", "Name width", 150, 0, 800);
-        yield return Spot("NameZ", "Name layer", 11, 0, 100);
-        yield return Spot("NumX", "Numbers X", 182);
-        yield return Spot("NumY", "Numbers Y", 4);
-        yield return Spot("NumW", "Numbers width", 74, 0, 800);
-        yield return Spot("NumZ", "Numbers layer", 12, 0, 100);
-        yield return Spot("HpX", "HP X", 4);
-        yield return Spot("HpY", "HP Y", 28);
+        yield return Spot("NameX", "Name X", 22);
+        yield return Spot("NameY", "Name Y", 1);
+        yield return Spot("NameW", "Name width", 90, 0, 800);
+        yield return Spot("NameZ", "Name layer", 12, 0, 100);
+        yield return Spot("NumX", "Numbers X", 112);
+        yield return Spot("NumY", "Numbers Y", 1);
+        yield return Spot("NumW", "Numbers width", 0, 0, 800);
+        yield return Spot("NumZ", "Numbers layer", 13, 0, 100);
+        yield return Spot("HpX", "HP X", 22);
+        yield return Spot("HpY", "HP Y", 15);
         yield return Spot("HpW", "HP width", 0, 0, 800);
         yield return Spot("HpZ", "HP layer", 20, 0, 100);
-        yield return Spot("MpX", "MP X", 4);
-        yield return Spot("MpY", "MP Y", 42);
+        yield return Spot("MpX", "MP X", 22);
+        yield return Spot("MpY", "MP Y", 24);
         yield return Spot("MpW", "MP width", 0, 0, 800);
         yield return Spot("MpZ", "MP layer", 21, 0, 100);
-        yield return Spot("ShieldX", "Shield X", 4);
-        yield return Spot("ShieldY", "Shield Y", 52);
+        yield return Spot("ShieldX", "Shield X", 22);
+        yield return Spot("ShieldY", "Shield Y", 24);
         yield return Spot("ShieldW", "Shield width", 0, 0, 800);
         yield return Spot("ShieldZ", "Shield layer", 22, 0, 100);
-        yield return Spot("CastTextX", "Cast text X", 4);
-        yield return Spot("CastTextY", "Cast text Y", 60);
+        yield return Spot("CastTextX", "Cast text X", 22);
+        yield return Spot("CastTextY", "Cast text Y", -14);
         yield return Spot("CastTextW", "Cast text width", 0, 0, 800);
-        yield return Spot("CastTextZ", "Cast text layer", 30, 0, 100);
-        yield return Spot("CastX", "Cast bar X", 4);
-        yield return Spot("CastY", "Cast bar Y", 78);
+        yield return Spot("CastTextZ", "Cast text layer", 40, 0, 100);
+        yield return Spot("CastX", "Cast bar X", 22);
+        yield return Spot("CastY", "Cast bar Y", 15);
         yield return Spot("CastW", "Cast bar width", 0, 0, 800);
-        yield return Spot("CastZ", "Cast bar layer", 31, 0, 100);
-        yield return Spot("BuffX", "Buffs X", 4);
-        yield return Spot("BuffY", "Buffs Y", 92);
-        yield return Spot("BuffZ", "Buffs layer", 40, 0, 100);
-        yield return Spot("DebuffX", "Debuffs X", 4);
-        yield return Spot("DebuffY", "Debuffs Y", 114);
-        yield return Spot("DebuffZ", "Debuffs layer", 41, 0, 100);
+        yield return Spot("CastZ", "Cast bar layer", 35, 0, 100);
+        yield return Spot("BuffX", "Buffs X", 2);
+        yield return Spot("BuffY", "Buffs Y", 32);
+        yield return Spot("BuffZ", "Buffs layer", 50, 0, 100);
+        yield return Spot("DebuffX", "Debuffs X", 2);
+        yield return Spot("DebuffY", "Debuffs Y", 48);
+        yield return Spot("DebuffZ", "Debuffs layer", 51, 0, 100);
+    }
+
+    protected override void ApplyLayout()
+    {
+        var choice = GetConfigValue<string>("Layout");
+        var first = GetConfigValue<string>("LayoutStamp") != "2";
+        if (!first && (string.IsNullOrEmpty(choice) || choice == "Custom"))
+            return;
+
+        var stacked = choice == "Stacked";
+        SetInt("Height", stacked ? 132 : 0);
+        SetInt("BarHeight", stacked ? 10 : 8);
+        SetInt("MpBarHeight", stacked ? 6 : 3);
+        SetInt("IconSize", stacked ? 20 : 18);
+        SetInt("TextSize", stacked ? 13 : 12);
+        SetInt("NumberSize", stacked ? 12 : 11);
+        SetInt("BuffIconSize", stacked ? 16 : 14);
+        SetInt("DebuffIconSize", stacked ? 16 : 14);
+        SetInt("JobX", stacked ? 4 : 2);
+        SetInt("JobY", stacked ? 4 : 5);
+        SetInt("NameX", stacked ? 28 : 22);
+        SetInt("NameY", stacked ? 4 : 1);
+        SetInt("NameW", stacked ? 140 : 90);
+        SetInt("NumX", stacked ? 170 : 112);
+        SetInt("NumY", stacked ? 4 : 1);
+        SetInt("NumW", stacked ? 80 : 0);
+        SetInt("HpX", stacked ? 4 : 22);
+        SetInt("HpY", stacked ? 28 : 15);
+        SetInt("MpX", stacked ? 4 : 22);
+        SetInt("MpY", stacked ? 42 : 24);
+        SetInt("ShieldX", stacked ? 4 : 22);
+        SetInt("ShieldY", stacked ? 52 : 24);
+        SetInt("CastTextX", stacked ? 4 : 22);
+        SetInt("CastTextY", stacked ? 64 : -14);
+        SetInt("CastX", stacked ? 4 : 22);
+        SetInt("CastY", stacked ? 80 : 15);
+        SetInt("BuffX", 4);
+        SetInt("BuffY", stacked ? 96 : 32);
+        SetInt("DebuffX", 4);
+        SetInt("DebuffY", stacked ? 116 : 48);
+        SetConfigValue("LayoutStamp", "2");
+        if (!first)
+            SetConfigValue("Layout", "Custom");
     }
 }

@@ -152,7 +152,6 @@ public sealed class CandyStatusWidget(
     protected override bool ShowDebuffs => true;
     protected override bool HighlightCleansable => true;
     protected override bool UseLayers => true;
-    protected override int CanvasHeight => GetConfigValue<int>("CanvasHeight");
     protected override int BuffIconSize => GetConfigValue<int>("BuffIconSize");
     protected override int DebuffIconSize => GetConfigValue<int>("DebuffIconSize");
     protected override int BuffCount => GetConfigValue<int>("BuffCount");
@@ -169,16 +168,15 @@ public sealed class CandyStatusWidget(
         foreach (var variable in base.GetConfigVariables())
             yield return variable;
 
-        yield return new IntegerWidgetConfigVariable("CanvasHeight", "Bar height", "The canvas both rows are placed on.", 60, 20, 400);
-        yield return new IntegerWidgetConfigVariable("BuffIconSize", "Buff icon size", null, 18, 10, 64);
-        yield return new IntegerWidgetConfigVariable("DebuffIconSize", "Debuff icon size", null, 26, 10, 64);
+        yield return new IntegerWidgetConfigVariable("BuffIconSize", "Buff icon size", null, 14, 8, 64);
+        yield return new IntegerWidgetConfigVariable("DebuffIconSize", "Debuff icon size", null, 14, 8, 64);
         yield return new IntegerWidgetConfigVariable("BuffCount", "Buff count", null, 8, 0, 16);
         yield return new IntegerWidgetConfigVariable("DebuffCount", "Debuff count", null, 8, 0, 16);
         yield return Spot("BuffX", "Buffs X", 4);
-        yield return Spot("BuffY", "Buffs Y", 4);
+        yield return Spot("BuffY", "Buffs Y", 1);
         yield return Spot("BuffZ", "Buffs layer", 10, 0, 100);
         yield return Spot("DebuffX", "Debuffs X", 4);
-        yield return Spot("DebuffY", "Debuffs Y", 26);
+        yield return Spot("DebuffY", "Debuffs Y", 16);
         yield return Spot("DebuffZ", "Debuffs layer", 20, 0, 100);
     }
 }

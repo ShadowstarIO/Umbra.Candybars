@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Dalamud.Game.ClientState.Buddy;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -46,6 +47,8 @@ internal static unsafe class HudReader
         if (who == "target") return FromActor(Targets.Target);
         if (who == "tot") return FromActor(Targets.Target?.TargetObject);
         if (who == "focus") return FromActor(Targets.FocusTarget);
+        if (who == "choco") return FromActor(Companion());
+        if (who == "pet") return FromActor(Pet());
 
         if (who.Length >= 2 && who[0] == 'p' && int.TryParse(who[1..], out var party))
             return ReadParty(party - 1);
@@ -70,6 +73,8 @@ internal static unsafe class HudReader
         if (who == "target") return "Target";
         if (who == "tot") return "Target of Target";
         if (who == "focus") return "Focus Target";
+        if (who == "choco") return "Chocobo";
+        if (who == "pet") return "Pet";
         if (who.Length >= 2 && who[0] == 'p' && int.TryParse(who[1..], out var party))
             return $"Party {party}";
         if (who.Length >= 2 && who[0] is 'a' or 'b' or 'c' && int.TryParse(who[1..], out var index))
@@ -86,6 +91,8 @@ internal static unsafe class HudReader
             ["target"] = "Target",
             ["tot"] = "Target of Target",
             ["focus"] = "Focus Target",
+            ["choco"] = "Chocobo",
+            ["pet"] = "Pet",
         };
 
         for (var i = 1; i <= 8; i++)
@@ -98,6 +105,35 @@ internal static unsafe class HudReader
         }
 
         return options;
+    }
+
+    private static IGameObject? Companion()
+    {
+        return Framework.Service<IBuddyList>().CompanionBuddy?.GameObject;
+    }
+
+    private static IGameObject? Pet()
+    {
+        var buddies = Framework.Service<IBuddyList>();
+        var pet = buddies.PetBuddy?.GameObject;
+        if (pet != null && pet.IsValid())
+            return pet;
+
+        var self = Objects.LocalPlayer;
+        if (self == null)
+            return null;
+
+        var companionId = buddies.CompanionBuddy?.GameObject?.EntityId ?? 0u;
+        foreach (var actor in Objects)
+        {
+            if (actor is not IBattleNpc npc || !npc.IsValid())
+                continue;
+
+            if (npc.OwnerId == self.EntityId && npc.EntityId != companionId)
+                return npc;
+        }
+
+        return null;
     }
 
     private static Subject? ReadMe()

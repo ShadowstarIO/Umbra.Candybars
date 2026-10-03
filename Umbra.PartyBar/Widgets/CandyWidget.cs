@@ -51,7 +51,7 @@ public abstract partial class CandyWidget(
     protected virtual int BuffCount => 8;
     protected virtual int DebuffCount => 8;
     protected virtual bool UseLayers => false;
-    protected virtual int CanvasHeight => 64;
+    protected virtual int CanvasHeight => GetConfigValue<int>("Height");
     protected virtual int JobX => 4;
     protected virtual int JobY => 4;
     protected virtual int JobZ => 10;
@@ -109,6 +109,8 @@ public abstract partial class CandyWidget(
 
     protected override void OnUpdate()
     {
+        ApplyLayout();
+
         var who = GetConfigValue<string>("Who");
         var subject = HudReader.Read(who);
 
@@ -139,9 +141,16 @@ public abstract partial class CandyWidget(
             new BooleanWidgetConfigVariable("HideWhenEmpty", "Hide when empty", "The stack closes up. Turn this off while placing bars.", true),
             new BooleanWidgetConfigVariable("Decorate", "Background", "Turn off to hide the widget background and border.", true),
             new BooleanWidgetConfigVariable("ClickToTarget", "Click to target", null, true),
-            new IntegerWidgetConfigVariable("Width", "Width", "Used in a vertical aux bar as well as on the main toolbar.", 260, 36, 800),
+            new IntegerWidgetConfigVariable("Width", "Width", "Space reserved beside other widgets. Pieces can hang past this.", 168, 24, 800),
+            new IntegerWidgetConfigVariable("Height", "Height", "0 matches the toolbar and does not stretch widgets beside this one. A larger number reserves that much vertical space.", 0, 0, 600),
         ];
     }
+
+    protected virtual void ApplyLayout()
+    {
+    }
+
+    protected void SetInt(string key, int value) => SetConfigValue(key, value);
 
     private void Draw(HudReader.Subject subject)
     {
@@ -172,37 +181,31 @@ public abstract partial class CandyWidget(
         var showNumbers = ShowNumbers && GetConfigValue<string>("Numbers") != "None";
         var header = showName || showJob || showNumbers;
         var layered = UseLayers;
-        var canvasHeight = CanvasHeight;
-
-        var height = 8;
+        var natural = 8;
         if (!layered)
         {
-            if (header) height += System.Math.Max(textSize + 6, System.Math.Max(iconSize, numberSize)) + 2;
-            if (showHp) height += barHeight + 3;
-            if (showMp) height += mpHeight + 3;
-            if (showShieldBar) height += shieldHeight + 3;
-            if (showCast) height += castHeight + castTextSize + 4;
-            if (showBuffs) height += buffSize + 3;
-            if (showDebuffs) height += debuffSize + 3;
-        }
-        else
-        {
-            height = canvasHeight;
+            if (header) natural += System.Math.Max(textSize + 6, System.Math.Max(iconSize, numberSize)) + 2;
+            if (showHp) natural += barHeight + 3;
+            if (showMp) natural += mpHeight + 3;
+            if (showShieldBar) natural += shieldHeight + 3;
+            if (showCast) natural += castHeight + castTextSize + 4;
+            if (showBuffs) natural += buffSize + 3;
+            if (showDebuffs) natural += debuffSize + 3;
         }
 
-        Node.Style.AutoSize = (AutoSize.Fit, AutoSize.Fit);
-        Node.Style.Size = new(width, height);
-        if (layered)
-        {
-            Node.Style.Padding = new(0);
-            SizerNode.Style.Anchor = Anchor.TopLeft;
-            SizerNode.Style.Margin = new EdgeSize(0);
-            SizerNode.Style.Size = new(width, height);
-        }
-        else
-        {
-            SizerNode.Style.Size = new(width - 8, 0);
-        }
+        // 0 keeps the widget the height of the toolbar, so pieces can hang off it
+        // without stretching the widgets beside it.
+        var height = CanvasHeight > 0
+            ? CanvasHeight
+            : layered ? SafeHeight : System.Math.Min(natural, SafeHeight);
+
+        Node.Overflow = true;
+        Node.Style.AutoSize = null;
+        Node.Style.Size = new(width, System.Math.Max(1, height));
+        Node.Style.Padding = layered ? new(0) : new(2);
+        SizerNode.Style.Anchor = Anchor.TopLeft;
+        SizerNode.Style.Margin = new EdgeSize(0);
+        SizerNode.Style.Size = new(System.Math.Max(1, width - (layered ? 0 : 4)), System.Math.Max(1, height));
 
         var decorated = GetConfigValue<bool>("Decorate");
         if (decorated) Node.TagsList.Remove("plain");
@@ -272,8 +275,7 @@ public abstract partial class CandyWidget(
             PlaceLayer(StateNode, 0, 0, width, height, 1);
             PlaceLayer(IconNode, JobX, JobY, iconSize, iconSize, JobZ);
             PlaceLayer(NameNode, NameX, NameY, Span(NameW, NameX, width), System.Math.Max(textSize + 4, iconSize), NameZ);
-            var numberBox = FitBox(NumX, NumY, Span(NumW, NumX, width), System.Math.Max(numberSize + 6, barHeight), width, height);
-            PlaceLayer(NumbersNode, numberBox.X, numberBox.Y, numberBox.Width, numberBox.Height, System.Math.Max(NumZ, HpZ + 1));
+            PlaceLayer(NumbersNode, NumX, NumY, Span(NumW, NumX, width), System.Math.Max(numberSize + 4, 12), System.Math.Max(NumZ, HpZ + 1));
             PlaceLayer(HpTrackNode, HpX, HpY, hpWidth, barHeight, HpZ);
             PlaceLayer(MpTrackNode, MpX, MpY, mpWidth, mpHeight, MpZ);
             PlaceLayer(ShieldTrackNode, ShieldX, ShieldY, shieldWidth, shieldHeight, ShieldZ);
@@ -346,15 +348,6 @@ public abstract partial class CandyWidget(
         }
 
         Node.Tooltip = slot.MaxHp > 0 ? $"{slot.Name}  {slot.Hp} / {slot.MaxHp}" : slot.Name;
-    }
-
-    private static (int X, int Y, int Width, int Height) FitBox(int x, int y, int boxWidth, int boxHeight, int canvasWidth, int canvasHeight)
-    {
-        boxWidth = System.Math.Clamp(boxWidth, 1, System.Math.Max(1, canvasWidth));
-        boxHeight = System.Math.Clamp(boxHeight, 1, System.Math.Max(1, canvasHeight));
-        x = System.Math.Clamp(x, 0, System.Math.Max(0, canvasWidth - boxWidth));
-        y = System.Math.Clamp(y, 0, System.Math.Max(0, canvasHeight - boxHeight));
-        return (x, y, boxWidth, boxHeight);
     }
 
     private static int Span(int configured, int x, int canvas)
@@ -505,9 +498,9 @@ public abstract partial class CandyWidget(
         return max == 0 ? 0 : current / (float)max;
     }
 
-    protected static IntegerWidgetConfigVariable Spot(string id, string name, int value, int min = -200, int max = 800)
+    protected static IntegerWidgetConfigVariable Spot(string id, string name, int value, int min = -800, int max = 1200)
     {
-        return new IntegerWidgetConfigVariable(id, name, "From the top-left of this bar. Width 0 fills the rest. Higher layer numbers draw on top.", value, min, max);
+        return new IntegerWidgetConfigVariable(id, name, "Pixels. Negative values hang off the bar. Width 0 fills the rest. Higher layers draw on top.", value, min, max);
     }
 
     protected static IEnumerable<IWidgetConfigVariable> NumberOptions()
