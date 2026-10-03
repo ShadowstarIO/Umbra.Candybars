@@ -51,6 +51,7 @@ public abstract partial class CandyWidget(
     protected virtual int BuffCount => 8;
     protected virtual int DebuffCount => 8;
     protected virtual bool UseLayers => false;
+    protected virtual bool PreviewShowsAll => false;
     protected virtual int CanvasHeight => GetConfigValue<int>("Height");
     protected virtual int JobX => 4;
     protected virtual int JobY => 4;
@@ -111,6 +112,7 @@ public abstract partial class CandyWidget(
     {
         ApplyLayout();
 
+        var preview = GetConfigValue<bool>("Preview");
         var who = GetConfigValue<string>("Who");
         var subject = HudReader.Read(who);
 
@@ -119,14 +121,18 @@ public abstract partial class CandyWidget(
             _entityId = 0;
             _name = string.Empty;
 
-            if (GetConfigValue<bool>("HideWhenEmpty"))
+            if (!preview && GetConfigValue<bool>("HideWhenEmpty"))
             {
                 IsVisible = false;
                 Node.Style.Size = new(0, 0);
                 return;
             }
 
-            subject = HudReader.Empty(HudReader.WhoLabel(who));
+            subject = preview ? HudReader.Preview(null) : HudReader.Empty(HudReader.WhoLabel(who));
+        }
+        else if (preview)
+        {
+            subject = HudReader.Preview(subject);
         }
 
         IsVisible = true;
@@ -137,12 +143,13 @@ public abstract partial class CandyWidget(
     {
         return
         [
-            new SelectWidgetConfigVariable("Who", "Who", "Which person this bar follows.", "p1", HudReader.WhoOptions()),
-            new BooleanWidgetConfigVariable("HideWhenEmpty", "Hide when empty", "The stack closes up. Turn this off while placing bars.", true),
-            new BooleanWidgetConfigVariable("Decorate", "Background", "Turn off to hide the widget background and border.", true),
-            new BooleanWidgetConfigVariable("ClickToTarget", "Click to target", null, true),
-            new IntegerWidgetConfigVariable("Width", "Width", "Space reserved beside other widgets. Pieces can hang past this.", 168, 24, 800),
-            new IntegerWidgetConfigVariable("Height", "Height", "0 matches the toolbar and does not stretch widgets beside this one. A larger number reserves that much vertical space.", 0, 0, 600),
+            new SelectWidgetConfigVariable("Who", "Who", "Which person this bar follows.", "p1", HudReader.WhoOptions()) { Category = "Bar" },
+            new BooleanWidgetConfigVariable("Preview", "Preview layout", "Draw every piece with sample bars, icons, and text so you can place them without a party.", false) { Category = "Bar" },
+            new BooleanWidgetConfigVariable("HideWhenEmpty", "Hide when empty", "The stack closes up. Turn this off while placing bars.", true) { Category = "Bar" },
+            new BooleanWidgetConfigVariable("Decorate", "Background", "Turn off to hide the widget background and border.", true) { Category = "Bar" },
+            new BooleanWidgetConfigVariable("ClickToTarget", "Click to target", null, true) { Category = "Bar" },
+            new IntegerWidgetConfigVariable("Width", "Width", "Space this widget reserves. Pieces can hang past it.", 168, 24, 800) { Category = "Bar", Group = "Size" },
+            new IntegerWidgetConfigVariable("Height", "Height", "0 matches the toolbar and does not stretch widgets beside this one.", 0, 0, 600) { Category = "Bar", Group = "Size" },
         ];
     }
 
@@ -169,16 +176,28 @@ public abstract partial class CandyWidget(
         var iconSize = IconSize;
         var buffSize = BuffIconSize;
         var debuffSize = DebuffIconSize;
+        var previewAll = GetConfigValue<bool>("Preview") && PreviewShowsAll;
         var showName = ShowName;
-        var showJob = ShowJob && slot.Job != 0;
+        var showJob = ShowJob && (previewAll || slot.Job != 0);
         var showHp = ShowHp;
-        var showMp = ShowMp && slot.MaxMp > 0;
-        var showShield = ShowShield && slot.Shield > 0 && !slot.Dead;
+        var showMp = ShowMp && (previewAll || slot.MaxMp > 0);
+        var showShield = ShowShield && !slot.Dead && (previewAll || slot.Shield > 0);
         var showShieldBar = ShowShieldBar;
-        var showCast = ShowCast && (subject.Cast != null || KeepCastRow);
+        var showCast = ShowCast && (previewAll || subject.Cast != null || KeepCastRow);
         var showBuffs = ShowBuffs;
         var showDebuffs = ShowDebuffs;
         var showNumbers = ShowNumbers && GetConfigValue<string>("Numbers") != "None";
+        if (previewAll)
+        {
+            showName = true;
+            showJob = true;
+            showHp = true;
+            showMp = true;
+            showShield = true;
+            showCast = true;
+            showBuffs = true;
+            showDebuffs = true;
+        }
         var header = showName || showJob || showNumbers;
         var layered = UseLayers;
         var natural = 8;
@@ -261,27 +280,26 @@ public abstract partial class CandyWidget(
         BuffRowNode.Style.IsVisible = showBuffs;
         DebuffRowNode.Style.IsVisible = showDebuffs;
 
-        var hpWidth = layered ? Span(HpW, HpX, width) : System.Math.Max(1, width - 4);
-        var mpWidth = layered ? Span(MpW, MpX, width) : System.Math.Max(1, width - 4);
-        var shieldWidth = layered ? Span(ShieldW, ShieldX, width) : System.Math.Max(1, width - 4);
-        var castWidth = layered ? Span(CastW, CastX, width) : System.Math.Max(1, width - 4);
+        var hpWidth = layered ? Span(HpW, 120) : System.Math.Max(1, width - 4);
+        var mpWidth = layered ? Span(MpW, 120) : System.Math.Max(1, width - 4);
+        var shieldWidth = layered ? Span(ShieldW, 120) : System.Math.Max(1, width - 4);
+        var castWidth = layered ? Span(CastW, 120) : System.Math.Max(1, width - 4);
         var nameBox = System.Math.Max(textSize + 4, 12);
         var numberBox = System.Math.Max(numberSize + 4, 12);
 
         if (layered)
         {
-            var shift = CenterShift(height, showJob, showName, showNumbers, showHp, showMp, showShieldBar, showCast, showBuffs, showDebuffs, iconSize, nameBox, numberBox, barHeight, mpHeight, shieldHeight, castTextSize + 4, castHeight, buffSize, debuffSize);
             PlaceLayer(StateNode, 0, 0, width, height, 1);
-            PlaceLayer(IconNode, JobX, Shifted(JobY, iconSize, height, shift), iconSize, iconSize, JobZ);
-            PlaceLayer(NameNode, NameX, Shifted(NameY, nameBox, height, shift), Span(NameW, NameX, width), nameBox, NameZ);
-            PlaceLayer(NumbersNode, NumX, Shifted(NumY, numberBox, height, shift), Span(NumW, NumX, width), numberBox, System.Math.Max(NumZ, HpZ + 1));
-            PlaceLayer(HpTrackNode, HpX, Shifted(HpY, barHeight, height, shift), hpWidth, barHeight, HpZ);
-            PlaceLayer(MpTrackNode, MpX, Shifted(MpY, mpHeight, height, shift), mpWidth, mpHeight, MpZ);
-            PlaceLayer(ShieldTrackNode, ShieldX, Shifted(ShieldY, shieldHeight, height, shift), shieldWidth, shieldHeight, ShieldZ);
-            PlaceLayer(CastNameNode, CastTextX, Shifted(CastTextY, castTextSize + 4, height, shift), Span(CastTextW, CastTextX, width), castTextSize + 4, CastTextZ);
-            PlaceLayer(CastTrackNode, CastX, Shifted(CastY, castHeight, height, shift), castWidth, castHeight, CastZ);
-            PlaceLayer(BuffRowNode, BuffX, Shifted(BuffY, buffSize, height, shift), System.Math.Max(buffSize, BuffCount * (buffSize + 1)), buffSize, BuffZ);
-            PlaceLayer(DebuffRowNode, DebuffX, Shifted(DebuffY, debuffSize, height, shift), System.Math.Max(debuffSize, DebuffCount * (debuffSize + 1)), debuffSize, DebuffZ);
+            PlaceLayer(IconNode, JobX, JobY, iconSize, iconSize, JobZ);
+            PlaceLayer(NameNode, NameX, NameY, Span(NameW, 90), nameBox, NameZ);
+            PlaceLayer(NumbersNode, NumX, NumY, Span(NumW, 64), numberBox, System.Math.Max(NumZ, HpZ + 1));
+            PlaceLayer(HpTrackNode, HpX, HpY, hpWidth, barHeight, HpZ);
+            PlaceLayer(MpTrackNode, MpX, MpY, mpWidth, mpHeight, MpZ);
+            PlaceLayer(ShieldTrackNode, ShieldX, ShieldY, shieldWidth, shieldHeight, ShieldZ);
+            PlaceLayer(CastNameNode, CastTextX, CastTextY, Span(CastTextW, 120), castTextSize + 4, CastTextZ);
+            PlaceLayer(CastTrackNode, CastX, CastY, castWidth, castHeight, CastZ);
+            PlaceLayer(BuffRowNode, BuffX, BuffY, System.Math.Max(buffSize, BuffCount * (buffSize + 1)), buffSize, BuffZ);
+            PlaceLayer(DebuffRowNode, DebuffX, DebuffY, System.Math.Max(debuffSize, DebuffCount * (debuffSize + 1)), debuffSize, DebuffZ);
             PlaceLayer(DeathNode, 0, 0, width, height, 200);
         }
         else
@@ -346,9 +364,9 @@ public abstract partial class CandyWidget(
         Node.Tooltip = slot.MaxHp > 0 ? $"{slot.Name}  {slot.Hp} / {slot.MaxHp}" : slot.Name;
     }
 
-    private static int Span(int configured, int x, int canvas)
+    private static int Span(int configured, int fallback)
     {
-        return configured > 0 ? configured : System.Math.Max(1, canvas - System.Math.Max(0, x));
+        return configured > 0 ? configured : fallback;
     }
 
     private static void PlaceLayer(Node node, int x, int y, int width, int height, int z)
@@ -357,67 +375,6 @@ public abstract partial class CandyWidget(
         node.Style.Margin = new EdgeSize(y, 0, 0, x);
         node.Style.Size = new(System.Math.Max(1, width), System.Math.Max(1, height));
         node.SortIndex = z;
-    }
-
-    private int CenterShift(
-        int height,
-        bool job,
-        bool name,
-        bool numbers,
-        bool hp,
-        bool mp,
-        bool shield,
-        bool cast,
-        bool buffs,
-        bool debuffs,
-        int icon,
-        int nameBox,
-        int numberBox,
-        int bar,
-        int mpBar,
-        int shieldBar,
-        int castText,
-        int castBar,
-        int buff,
-        int debuff)
-    {
-        var top = int.MaxValue;
-        var bottom = int.MinValue;
-
-        void Box(bool show, int y, int box)
-        {
-            if (!show || box <= 0 || y < 0 || y + box > height + 1)
-                return;
-
-            if (y < top)
-                top = y;
-            if (y + box > bottom)
-                bottom = y + box;
-        }
-
-        Box(job, JobY, icon);
-        Box(name, NameY, nameBox);
-        Box(numbers, NumY, numberBox);
-        Box(hp, HpY, bar);
-        Box(mp, MpY, mpBar);
-        Box(shield, ShieldY, shieldBar);
-        Box(cast, CastTextY, castText);
-        Box(cast, CastY, castBar);
-        Box(buffs, BuffY, buff);
-        Box(debuffs, DebuffY, debuff);
-
-        if (bottom <= top)
-            return 0;
-
-        return (height - (bottom - top)) / 2 - top;
-    }
-
-    private static int Shifted(int y, int box, int height, int shift)
-    {
-        if (box <= 0 || y < 0 || y + box > height + 1)
-            return y;
-
-        return y + shift;
     }
 
     private void PlaceFitted(
@@ -706,12 +663,24 @@ public abstract partial class CandyWidget(
         return max == 0 ? 0 : current / (float)max;
     }
 
-    protected static IntegerWidgetConfigVariable Spot(string id, string name, int value, int min = -800, int max = 1200)
+    protected static IntegerWidgetConfigVariable Spot(string id, string name, int value, string category, string group, int min = -800, int max = 1200)
     {
-        return new IntegerWidgetConfigVariable(id, name, "Pixels. Negative values hang off the bar. Width 0 fills the rest. Higher layers draw on top.", value, min, max);
+        var moves = name is "X" or "Y" || name.EndsWith(" X") || name.EndsWith(" Y");
+        var sizes = name.Contains("width", System.StringComparison.OrdinalIgnoreCase);
+        var description = moves
+            ? "Moves this piece. Does not change its size."
+            : sizes
+                ? "Width of this piece. Does not move it. 0 uses the default width."
+                : "Draw order. Higher numbers paint on top.";
+
+        return new IntegerWidgetConfigVariable(id, name, description, value, min, max)
+        {
+            Category = category,
+            Group = group,
+        };
     }
 
-    protected static IEnumerable<IWidgetConfigVariable> NumberOptions()
+    protected static IEnumerable<IWidgetConfigVariable> NumberOptions(string category = "Numbers")
     {
         yield return new SelectWidgetConfigVariable(
             "Numbers",
@@ -726,7 +695,7 @@ public abstract partial class CandyWidget(
                 { "CurrentMax", "Current / Max" },
                 { "CurrentMaxPercent", "Current / Max / Percent" },
             }
-        );
+        ) { Category = category };
     }
 
     private static readonly Color DeadColor = new(80, 80, 80);

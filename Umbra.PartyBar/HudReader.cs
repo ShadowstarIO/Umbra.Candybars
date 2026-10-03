@@ -62,6 +62,39 @@ internal static unsafe class HudReader
         return null;
     }
 
+    internal static Subject Preview(Subject? live)
+    {
+        var slot = live?.Slot ?? new Slot("Player Name", 24, 18000, 24000, 6400, 10000, 0, 30);
+        if (slot.MaxHp == 0 || slot.Job == 0)
+        {
+            slot = new Slot(
+                slot.MaxHp == 0 ? "Player Name" : slot.Name,
+                slot.Job == 0 ? (byte)24 : slot.Job,
+                slot.MaxHp == 0 ? 18000 : slot.Hp,
+                slot.MaxHp == 0 ? 24000 : slot.MaxHp,
+                slot.MaxMp == 0 ? 6400 : slot.Mp,
+                slot.MaxMp == 0 ? 10000 : slot.MaxMp,
+                slot.EntityId,
+                slot.Shield == 0 ? (byte)30 : slot.Shield);
+        }
+
+        return new Subject(slot, live?.Cast ?? new CastBar("Cure", 0.45f), true, SampleIcons());
+    }
+
+    private static IReadOnlyList<StatusIcon> SampleIcons()
+    {
+        return
+        [
+            new(62119, false, false, 2, 18),
+            new(62121, false, false, 0, 14),
+            new(62124, false, false, 0, 9),
+            new(62128, false, false, 0, 6),
+            new(62132, true, true, 0, 12),
+            new(62133, true, false, 0, 8),
+            new(62137, true, false, 0, 4),
+        ];
+    }
+
     internal static Subject Empty(string label)
     {
         return new Subject(new Slot(label, 0, 0, 0, 0, 0, 0, 0), null, false, []);

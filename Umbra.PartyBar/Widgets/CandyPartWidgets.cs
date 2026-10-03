@@ -152,6 +152,7 @@ public sealed class CandyStatusWidget(
     protected override bool ShowDebuffs => true;
     protected override bool HighlightCleansable => true;
     protected override bool UseLayers => true;
+    protected override bool PreviewShowsAll => true;
     protected override int BuffIconSize => GetConfigValue<int>("BuffIconSize");
     protected override int DebuffIconSize => GetConfigValue<int>("DebuffIconSize");
     protected override int BuffCount => GetConfigValue<int>("BuffCount");
@@ -168,16 +169,16 @@ public sealed class CandyStatusWidget(
         foreach (var variable in base.GetConfigVariables())
             yield return variable;
 
-        yield return new IntegerWidgetConfigVariable("BuffIconSize", "Buff icon size", null, 14, 8, 64);
-        yield return new IntegerWidgetConfigVariable("DebuffIconSize", "Debuff icon size", null, 14, 8, 64);
-        yield return new IntegerWidgetConfigVariable("BuffCount", "Buff count", null, 8, 0, 16);
-        yield return new IntegerWidgetConfigVariable("DebuffCount", "Debuff count", null, 8, 0, 16);
-        yield return Spot("BuffX", "Buffs X", 4);
-        yield return Spot("BuffY", "Buffs Y", 1);
-        yield return Spot("BuffZ", "Buffs layer", 10, 0, 100);
-        yield return Spot("DebuffX", "Debuffs X", 4);
-        yield return Spot("DebuffY", "Debuffs Y", 16);
-        yield return Spot("DebuffZ", "Debuffs layer", 20, 0, 100);
+        yield return new IntegerWidgetConfigVariable("BuffIconSize", "Icon size", null, 14, 8, 64) { Category = "Buffs", Group = "Size" };
+        yield return new IntegerWidgetConfigVariable("DebuffIconSize", "Icon size", null, 14, 8, 64) { Category = "Debuffs", Group = "Size" };
+        yield return new IntegerWidgetConfigVariable("BuffCount", "Count", null, 8, 0, 16) { Category = "Buffs", Group = "Size" };
+        yield return new IntegerWidgetConfigVariable("DebuffCount", "Count", null, 8, 0, 16) { Category = "Debuffs", Group = "Size" };
+        yield return Spot("BuffX", "X", 4, "Buffs", "Place");
+        yield return Spot("BuffY", "Y", 1, "Buffs", "Place");
+        yield return Spot("BuffZ", "Layer", 10, "Buffs", "Place", 0, 100);
+        yield return Spot("DebuffX", "X", 4, "Debuffs", "Place");
+        yield return Spot("DebuffY", "Y", 16, "Debuffs", "Place");
+        yield return Spot("DebuffZ", "Layer", 20, "Debuffs", "Place", 0, 100);
     }
 }
 

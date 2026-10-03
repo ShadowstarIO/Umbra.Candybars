@@ -39,6 +39,7 @@ public sealed class PartySlotWidget(
     protected override int BuffCount => GetConfigValue<int>("BuffCount");
     protected override int DebuffCount => GetConfigValue<int>("DebuffCount");
     protected override bool UseLayers => true;
+    protected override bool PreviewShowsAll => true;
     protected override int JobX => GetConfigValue<int>("JobX");
     protected override int JobY => GetConfigValue<int>("JobY");
     protected override int JobZ => GetConfigValue<int>("JobZ");
@@ -82,105 +83,89 @@ public sealed class PartySlotWidget(
         foreach (var variable in base.GetConfigVariables())
             yield return variable;
 
-        yield return new BooleanWidgetConfigVariable("ShowName", "Show name", null, true);
-        yield return new BooleanWidgetConfigVariable("ShowJobIcon", "Show job icon", null, true);
-        yield return new BooleanWidgetConfigVariable("ShowHp", "HP bar", null, true);
-        yield return new BooleanWidgetConfigVariable("ShowMp", "MP bar", "Hidden when that person has no MP.", true);
-        yield return new BooleanWidgetConfigVariable("ShowShield", "Shield on the HP bar", "Only while that character is loaded nearby.", true);
-        yield return new BooleanWidgetConfigVariable("ShowCast", "Cast bar", "Only while that character is loaded nearby.", true);
-        yield return new BooleanWidgetConfigVariable("ShowBuffs", "Buffs", null, false);
-        yield return new BooleanWidgetConfigVariable("ShowDebuffs", "Debuffs", null, false);
-        yield return new BooleanWidgetConfigVariable("CleansableHighlight", "Cleansable highlight", "Green border when a debuff can be cleansed.", true);
-        yield return new BooleanWidgetConfigVariable("DeathMark", "Death marker", "Greys the bar and stamps DEAD.", true);
+        yield return Flag("ShowName", "Show name", null, true, "Name");
+        yield return Flag("ShowJobIcon", "Show job icon", null, true, "Job");
+        yield return Flag("ShowHp", "Show HP bar", null, true, "HP");
+        yield return Flag("ShowMp", "Show MP bar", "Hidden when that person has no MP, unless Preview layout is on.", true, "MP");
+        yield return Flag("ShowShield", "Shield on the HP bar", "Only while that character is loaded nearby.", true, "Shield");
+        yield return Flag("ShowCast", "Show cast", "Only while that character is loaded nearby, unless Preview layout is on.", true, "Cast");
+        yield return Flag("ShowBuffs", "Show buffs", null, false, "Buffs");
+        yield return Flag("ShowDebuffs", "Show debuffs", null, false, "Debuffs");
+        yield return Flag("CleansableHighlight", "Cleansable highlight", "Green border when a debuff can be cleansed.", true, "Debuffs");
+        yield return Flag("DeathMark", "Death marker", "Greys the bar and stamps DEAD.", true, "Bar");
 
         foreach (var variable in NumberOptions())
             yield return variable;
 
-        yield return new SelectWidgetConfigVariable(
-            "ColorMode",
-            "Color",
-            null,
-            "Role",
-            new() { { "Role", "Role" }, { "Flat", "One color" } }
-        );
-        yield return new SelectWidgetConfigVariable(
-            "FlatColor",
-            "Flat color",
-            "Used when Color is One color.",
-            "Blue",
-            new()
-            {
-                { "Blue", "Blue" },
-                { "Green", "Green" },
-                { "Red", "Red" },
-                { "Yellow", "Yellow" },
-                { "White", "White" },
-            }
-        );
-        yield return new IntegerWidgetConfigVariable("BarHeight", "HP bar height", null, 10, 4, 48);
-        yield return new IntegerWidgetConfigVariable("MpBarHeight", "MP bar height", null, 6, 3, 48);
-        yield return new IntegerWidgetConfigVariable("ShieldBarHeight", "Shield bar height", "Used when the shield is its own bar.", 4, 3, 48);
-        yield return new IntegerWidgetConfigVariable("CastBarHeight", "Cast bar height", null, 10, 4, 48);
-        yield return new IntegerWidgetConfigVariable("TextSize", "Name size", null, 13, 10, 28);
-        yield return new IntegerWidgetConfigVariable("NumberSize", "Number size", null, 12, 8, 28);
-        yield return new IntegerWidgetConfigVariable("CastTextSize", "Cast text size", null, 12, 8, 28);
-        yield return new IntegerWidgetConfigVariable("IconSize", "Job icon size", null, 20, 12, 64);
-        yield return new IntegerWidgetConfigVariable("BuffIconSize", "Buff icon size", null, 18, 10, 64);
-        yield return new IntegerWidgetConfigVariable("DebuffIconSize", "Debuff icon size", null, 22, 10, 64);
-        yield return new IntegerWidgetConfigVariable("BuffCount", "Buff count", null, 8, 0, 16);
-        yield return new IntegerWidgetConfigVariable("DebuffCount", "Debuff count", null, 8, 0, 16);
-        yield return new SelectWidgetConfigVariable(
-            "Layout",
-            "Layout",
-            "Pick a starting arrangement. It is applied once, then this returns to Custom so your own X and Y edits stay.",
-            "Custom",
-            new()
-            {
-                { "Custom", "Custom" },
-                { "Compact", "Compact, fits the toolbar" },
-                { "Stacked", "Stacked, reserves height" },
-            }
-        );
+        yield return new SelectWidgetConfigVariable("ColorMode", "Color", null, "Role", new() { { "Role", "Role" }, { "Flat", "One color" } }) { Category = "HP" };
+        yield return new SelectWidgetConfigVariable("FlatColor", "Flat color", "Used when Color is One color.", "Blue", new() { { "Blue", "Blue" }, { "Green", "Green" }, { "Red", "Red" }, { "Yellow", "Yellow" }, { "White", "White" } }) { Category = "HP", Group = "Color" };
+        yield return Size("BarHeight", "Height", null, 10, 4, 48, "HP");
+        yield return Size("MpBarHeight", "Height", null, 6, 3, 48, "MP");
+        yield return Size("ShieldBarHeight", "Height", "Used when the shield is its own bar.", 4, 3, 48, "Shield");
+        yield return Size("CastBarHeight", "Bar height", null, 10, 4, 48, "Cast");
+        yield return Size("TextSize", "Text size", null, 13, 10, 28, "Name");
+        yield return Size("NumberSize", "Text size", null, 12, 8, 28, "Numbers");
+        yield return Size("CastTextSize", "Text size", null, 12, 8, 28, "Cast");
+        yield return Size("IconSize", "Icon size", null, 20, 12, 64, "Job");
+        yield return Size("BuffIconSize", "Icon size", null, 18, 10, 64, "Buffs");
+        yield return Size("DebuffIconSize", "Icon size", null, 22, 10, 64, "Debuffs");
+        yield return Size("BuffCount", "Count", null, 8, 0, 16, "Buffs");
+        yield return Size("DebuffCount", "Count", null, 8, 0, 16, "Debuffs");
+        yield return new SelectWidgetConfigVariable("Layout", "Layout", "Pick a starting arrangement. It is applied once, then this returns to Custom so your own X and Y edits stay.", "Custom", new() { { "Custom", "Custom" }, { "Compact", "Compact, fits the toolbar" }, { "Stacked", "Stacked, reserves height" } }) { Category = "Bar" };
         var stamp = new StringWidgetConfigVariable("LayoutStamp", "Layout stamp", null, "");
         stamp.IsHidden = true;
         yield return stamp;
-        yield return Spot("JobX", "Job X", 2);
-        yield return Spot("JobY", "Job Y", 5);
-        yield return Spot("JobZ", "Job layer", 10, 0, 100);
-        yield return Spot("NameX", "Name X", 22);
-        yield return Spot("NameY", "Name Y", 1);
-        yield return Spot("NameW", "Name width", 90, 0, 800);
-        yield return Spot("NameZ", "Name layer", 12, 0, 100);
-        yield return Spot("NumX", "Numbers X", 112);
-        yield return Spot("NumY", "Numbers Y", 1);
-        yield return Spot("NumW", "Numbers width", 0, 0, 800);
-        yield return Spot("NumZ", "Numbers layer", 13, 0, 100);
-        yield return Spot("HpX", "HP X", 22);
-        yield return Spot("HpY", "HP Y", 15);
-        yield return Spot("HpW", "HP width", 0, 0, 800);
-        yield return Spot("HpZ", "HP layer", 20, 0, 100);
-        yield return Spot("MpX", "MP X", 22);
-        yield return Spot("MpY", "MP Y", 24);
-        yield return Spot("MpW", "MP width", 0, 0, 800);
-        yield return Spot("MpZ", "MP layer", 21, 0, 100);
-        yield return Spot("ShieldX", "Shield X", 22);
-        yield return Spot("ShieldY", "Shield Y", 24);
-        yield return Spot("ShieldW", "Shield width", 0, 0, 800);
-        yield return Spot("ShieldZ", "Shield layer", 22, 0, 100);
-        yield return Spot("CastTextX", "Cast text X", 22);
-        yield return Spot("CastTextY", "Cast text Y", -14);
-        yield return Spot("CastTextW", "Cast text width", 0, 0, 800);
-        yield return Spot("CastTextZ", "Cast text layer", 40, 0, 100);
-        yield return Spot("CastX", "Cast bar X", 22);
-        yield return Spot("CastY", "Cast bar Y", 15);
-        yield return Spot("CastW", "Cast bar width", 0, 0, 800);
-        yield return Spot("CastZ", "Cast bar layer", 35, 0, 100);
-        yield return Spot("BuffX", "Buffs X", 2);
-        yield return Spot("BuffY", "Buffs Y", 32);
-        yield return Spot("BuffZ", "Buffs layer", 50, 0, 100);
-        yield return Spot("DebuffX", "Debuffs X", 2);
-        yield return Spot("DebuffY", "Debuffs Y", 48);
-        yield return Spot("DebuffZ", "Debuffs layer", 51, 0, 100);
+        yield return Spot("JobX", "X", 2, "Job", "Place");
+        yield return Spot("JobY", "Y", 5, "Job", "Place");
+        yield return Spot("JobZ", "Layer", 10, "Job", "Place", 0, 100);
+        yield return Spot("NameX", "X", 22, "Name", "Place");
+        yield return Spot("NameY", "Y", 1, "Name", "Place");
+        yield return Spot("NameW", "Width", 90, "Name", "Size", 0, 800);
+        yield return Spot("NameZ", "Layer", 12, "Name", "Place", 0, 100);
+        yield return Spot("NumX", "X", 112, "Numbers", "Place");
+        yield return Spot("NumY", "Y", 1, "Numbers", "Place");
+        yield return Spot("NumW", "Width", 64, "Numbers", "Size", 0, 800);
+        yield return Spot("NumZ", "Layer", 13, "Numbers", "Place", 0, 100);
+        yield return Spot("HpX", "X", 22, "HP", "Place");
+        yield return Spot("HpY", "Y", 15, "HP", "Place");
+        yield return Spot("HpW", "Width", 120, "HP", "Size", 0, 800);
+        yield return Spot("HpZ", "Layer", 20, "HP", "Place", 0, 100);
+        yield return Spot("MpX", "X", 22, "MP", "Place");
+        yield return Spot("MpY", "Y", 24, "MP", "Place");
+        yield return Spot("MpW", "Width", 120, "MP", "Size", 0, 800);
+        yield return Spot("MpZ", "Layer", 21, "MP", "Place", 0, 100);
+        yield return Spot("ShieldX", "X", 22, "Shield", "Place");
+        yield return Spot("ShieldY", "Y", 24, "Shield", "Place");
+        yield return Spot("ShieldW", "Width", 120, "Shield", "Size", 0, 800);
+        yield return Spot("ShieldZ", "Layer", 22, "Shield", "Place", 0, 100);
+        yield return Spot("CastTextX", "Text X", 22, "Cast", "Place");
+        yield return Spot("CastTextY", "Text Y", -14, "Cast", "Place");
+        yield return Spot("CastTextW", "Text width", 120, "Cast", "Size", 0, 800);
+        yield return Spot("CastTextZ", "Text layer", 40, "Cast", "Place", 0, 100);
+        yield return Spot("CastX", "Bar X", 22, "Cast", "Place");
+        yield return Spot("CastY", "Bar Y", 15, "Cast", "Place");
+        yield return Spot("CastW", "Bar width", 120, "Cast", "Size", 0, 800);
+        yield return Spot("CastZ", "Bar layer", 35, "Cast", "Place", 0, 100);
+        yield return Spot("BuffX", "X", 2, "Buffs", "Place");
+        yield return Spot("BuffY", "Y", 32, "Buffs", "Place");
+        yield return Spot("BuffZ", "Layer", 50, "Buffs", "Place", 0, 100);
+        yield return Spot("DebuffX", "X", 2, "Debuffs", "Place");
+        yield return Spot("DebuffY", "Y", 48, "Debuffs", "Place");
+        yield return Spot("DebuffZ", "Layer", 51, "Debuffs", "Place", 0, 100);
+    }
+
+    private static BooleanWidgetConfigVariable Flag(string id, string name, string? description, bool value, string category)
+    {
+        return new BooleanWidgetConfigVariable(id, name, description, value) { Category = category };
+    }
+
+    private static IntegerWidgetConfigVariable Size(string id, string name, string? description, int value, int min, int max, string category)
+    {
+        return new IntegerWidgetConfigVariable(id, name, description ?? "Size of this piece. Does not move it.", value, min, max)
+        {
+            Category = category,
+            Group = "Size",
+        };
     }
 
     protected override void ApplyLayout()
